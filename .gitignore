@@ -23,3 +23,5 @@ wp-content/plugins/*
 wp-content/themes/*
 !wp-content/themes/hairy-hair/
 !wp-content/themes/hairy-hair/**
+
+wp-content/mu-plugins/hairyhair-nonprod-guard.php
