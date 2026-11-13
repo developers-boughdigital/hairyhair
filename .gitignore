@@ -1,0 +1,25 @@
+# Ignore everything
+*
+
+# Allow root .gitignore
+!.gitignore
+
+# Allow wp-content directory
+!wp-content/
+wp-content/*
+
+# Allow mu-plugins
+!wp-content/mu-plugins/
+!wp-content/mu-plugins/**
+
+# Allow plugins/hairyhair-quiz
+!wp-content/plugins/
+wp-content/plugins/*
+!wp-content/plugins/hairyhair-quiz/
+!wp-content/plugins/hairyhair-quiz/**
+
+# Allow themes/hairyhair
+!wp-content/themes/
+wp-content/themes/*
+!wp-content/themes/hairyhair/
+!wp-content/themes/hairyhair/**
