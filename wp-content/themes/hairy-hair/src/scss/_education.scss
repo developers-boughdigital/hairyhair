@@ -1,0 +1,81 @@
+.category-specific {
+    .wrapper {
+        padding: 70px 0;
+
+        .global-title  {
+            h2 {
+                margin-bottom: 0;
+            }
+        }
+    }
+}
+.ingredients {
+    &.all-popular-article {
+        .slick-list {
+            padding: 0 3% 0 0 !important;
+        }
+    }
+    .global-title  {
+        h2 {
+            margin-bottom: 0;
+        }
+    }
+}
+
+.education-newsletter {
+    position: relative;
+    overflow: hidden;
+    &::after {
+        background: {
+            image: url(../../assets/education-newsletter.png);
+            size: cover;
+            position: right;
+            repeat: no-repeat;
+        }
+        position: absolute;
+        right: 0;
+        left: auto;
+        top: 0;
+        bottom: 0;
+        content: "";
+        display: flex;
+        flex-wrap: wrap;
+        height: 100%;
+        width: 44%;
+        z-index: 0;
+        opacity: .4;
+
+        @media(max-width: $lg-1280) {
+            width: 38%;
+        }
+        @media(max-width: $lg-1199) {
+            width: 49%;
+        }
+        @media(max-width: $md-767) {
+            width: 69%;
+            opacity: 0.2;
+        }
+        @media(max-width: $sm-575) {
+            width: 100%;
+        }
+    }
+    
+    h2 {
+        @media(max-width: $sm-575) {
+            font-size: 30px;
+            line-height: 30px;
+        }
+    }
+
+    .news-wrap {
+        position: relative;
+        z-index: 1;
+    }
+
+    .subscribe-box {
+        @media(max-width: $sm-575) {
+            text-align: center;
+        }
+    }
+}
+

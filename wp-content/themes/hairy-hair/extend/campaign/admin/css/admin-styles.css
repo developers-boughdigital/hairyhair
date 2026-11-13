@@ -1,0 +1,67 @@
+/* extend/campaign/admin/css/admin-styles.css */
+
+.hh-campaign-cms-dashboard h1 {
+    margin-bottom: 20px;
+}
+
+.campaign-status-upcoming {
+    color: #0073aa; /* WordPress blue */
+    font-weight: bold;
+}
+
+.campaign-status-live {
+    color: #46b450; /* WordPress green */
+    font-weight: bold;
+}
+
+.campaign-status-paused {
+    color: #ffb900; /* WordPress yellow/orange */
+    font-weight: bold;
+}
+
+.campaign-status-expired {
+    color: #a00; /* WordPress red */
+    font-weight: bold;
+}
+
+.campaign-slot-box {
+    border: 1px solid #c3c4c7;
+    padding: 15px;
+    margin-bottom: 20px;
+    background: #fff;
+    border-radius: 4px;
+}
+
+.campaign-slot-box h3 {
+    margin-top: 0;
+    margin-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    padding-bottom: 10px;
+}
+
+.hh-campaign-image-preview {
+    margin-top: 10px;
+    margin-bottom: 10px;
+    border: 1px dashed #ccc;
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden; /* Ensure image doesn't break layout */
+    padding: 5px;
+}
+
+.hh-campaign-image-preview img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+.hh-campaign-image-preview:empty:after {
+    content: "No image selected";
+    color: #999;
+}
+
+.notice-success, .notice-error {
+    display: block !important; /* Override initial display:none from JS */
+}

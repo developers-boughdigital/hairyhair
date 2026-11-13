@@ -1,0 +1,142 @@
+/* Admin styles for Hairy Quiz Manager */
+
+.hairy-quiz-form-container {
+    background: #fff;
+    border: 1px solid #c3c4c7;
+    box-shadow: 0 1px 1px rgba(0,0,0,.04);
+    padding: 20px;
+    margin-top: 20px;
+    border-radius: 8px;
+}
+
+.hairy-quiz-form-container h2 {
+    margin-top: 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 20px;
+}
+
+.form-table th {
+    padding-left: 0;
+    width: 150px;
+}
+
+.form-table td {
+    padding-right: 0;
+}
+
+.form-table .regular-text,
+.form-table .large-text,
+.form-table select.regular-text { /* Added select for consistent styling */
+    width: 100%;
+    max-width: 500px;
+}
+
+.form-table .small-text {
+    width: 80px;
+}
+
+#answers_container .answer-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+#answers_container .answer-row input {
+    flex-grow: 1;
+    margin-right: 10px;
+    max-width: 480px; /* Adjust based on container width */
+}
+
+.hairy-remove-answer {
+    line-height: 1;
+    height: auto;
+    padding: 5px 10px;
+    font-size: 18px;
+    color: #a00;
+    border-color: #a00;
+    background: transparent;
+}
+
+.hairy-remove-answer:hover {
+    color: #f00;
+    border-color: #f00;
+    background: transparent;
+}
+
+#hairy-add-answer {
+    margin-top: 10px;
+}
+
+/* Table styles */
+.hairy-quiz-table {
+    margin-top: 20px;
+    border-radius: 8px;
+    overflow: hidden; /* For rounded corners on table */
+}
+
+.hairy-quiz-table th {
+    background-color: #f0f0f0;
+}
+
+.hairy-quiz-table td,
+.hairy-quiz-table th {
+    padding: 10px 12px;
+}
+
+.hairy-quiz-table ul {
+    margin: 0;
+    padding-left: 20px;
+}
+
+.hairy-quiz-table li {
+    margin-bottom: 5px;
+}
+
+.button-danger {
+    background: #dc3232;
+    border-color: #dc3232;
+    color: #fff;
+    box-shadow: 0 1px 0 rgba(0,0,0,.15);
+}
+
+.button-danger:hover,
+.button-danger:focus {
+    background: #cc1818;
+    border-color: #cc1818;
+    color: #fff;
+}
+
+/* Messages */
+.hairy-message {
+    padding: 15px;
+    margin: 15px 0;
+    border-radius: 4px;
+    font-weight: bold;
+}
+
+.hairy-message.success {
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+}
+
+.hairy-message.error {
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    color: #a94442;
+}
+
+/* Datepicker z-index fix for admin */
+.ui-datepicker {
+    z-index: 999999 !important;
+}
+
+
+
+.pagination-links a {
+    margin: 2px !important;
+}
+span.paging-input {
+    padding: 5px;
+}

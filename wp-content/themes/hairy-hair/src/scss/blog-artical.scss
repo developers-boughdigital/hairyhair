@@ -1,0 +1,424 @@
+.blog-artical-page {
+    .blog-artical-header{
+        padding-top: 135px;
+    }
+
+    .blog-artical-head{
+        width: 75%;
+        padding: 54px 0 20px 0;
+        @media(max-width: $md-767) {
+            width: 100%;
+        }
+        @media(max-width: $sm-420) {
+            margin-top: 20px;
+        }
+        nav {
+            a, span {
+                color: $grey-3d;   
+                &.active{
+                    color: $dark;
+                    font-weight: 500;
+                }
+                &::after{
+                    filter: brightness(0) saturate(100%) invert(27%) sepia(54%) saturate(337%) hue-rotate(174deg) brightness(94%) contrast(89%);
+                }
+            }
+        }
+        .heading2,
+        .breadcrumbs {
+            color: $grey-3d;
+        }
+        .breadcrumbs {
+            margin-bottom: 10px;
+        }
+    }
+    .blog-artical-inner{
+        gap: 20px;
+        @media(max-width: $md-767) {
+            flex-direction: column;
+        }
+    }
+    .blog-artical{
+        &-details{
+            width: 75%;  
+            @media(max-width: $md-767) {
+                width: 100%;
+            }                 
+            .author-box{
+                display: flex;
+                flex-wrap: wrap;
+                gap: 20px;
+                margin: 20px 0 40px 0;
+                border-bottom: 1px solid #d9d9d9;
+                padding-bottom: 40px;
+                .author-details{
+                    display: flex;
+                    gap: 8px;
+                    align-items: center;
+                    margin-right: 40px;
+                    &:last-child{
+                        margin-right: 0;
+                    }
+                    img{
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 100%;
+                    }
+                }
+                .author-name{
+                    display: flex;
+                    flex-direction: column;
+                    p{
+                        font-size: 14px;
+                        font-weight: 400;
+                        line-height: 1.64;
+                        margin: 0;
+                        color: $primary;
+                    }
+                    h6{
+                        font-size: 16px;
+                        line-height: 1.65;
+                        font-weight: 500;
+                        margin: 0;
+                        font-family: 'Altone Med';
+                    }
+                }
+            }
+            .beard-issues{
+                .thicker-hair-solution{
+                    background-color: #505F6D;
+                    display: flex;                
+                    padding: 25px;
+                    margin-bottom: 20px;
+                    @media(max-width: $md-767) {
+                        flex-direction: column;
+                        align-items: center;
+                        justify-content: center;
+                        text-align: center;
+                        gap: 20px;
+                    }  
+                    .hairloss-img{
+                        width: 40%;
+                        padding: 10px;
+                        @media(max-width: $md-767) {
+                            width: 100%;
+                        }
+                    }
+                    .thicker-content{
+                        width: 60%;
+                        padding: 10px;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        gap: 10px;
+                        @media(max-width: $md-767) {
+                            align-items: center;
+                            width: 100%;
+                        }
+                        h5{
+                            color: $white;
+                            font-size: 20px;
+                            line-height: 1.5;
+                        }
+                        p{
+                            color: $white;
+                            font-size: 16px;
+                            line-height: 150%;
+                            margin: 10px 0 15px 0;
+                        }
+                    }
+                }
+                
+            }
+            .control-hair-loss{
+                background: url(../../assets/control-hair-loss-img.webp) no-repeat;
+                background-size: cover;
+                width: 100%;
+                height: 100%;
+                padding: 20px;
+                margin-bottom: 20px;
+                @media(max-width: $md-767) {
+                    background-position: -331px 0px;
+                    background-size: cover;
+                }
+                &-inner{
+                    border: 6px solid $dark-blue;
+                    @media(max-width: $md-767) {
+                        display: flex;
+                        flex-direction: column;
+                    }
+                    .left-blank{
+                        width: 50%;
+                        @media(max-width: $md-767) {
+                            width: 100%;
+                            min-height: 231px;
+                        }
+                    }
+                    .right-content{
+                        width: 50%;
+                        color: $white;
+                        background-color: $dark-blue;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: flex-start;
+                        padding: 25px;
+                        gap: 20px;
+                        margin-left: auto;
+                        @media(max-width: $md-767) {
+                            width: 100%;
+                        }
+                        h4{
+                            font-family: 'Altone Med';
+                            font-weight: 500;
+                            font-size: 23px;
+                            line-height: 1.304;
+                            margin: 0;
+                        }
+                        p{
+                            margin: 0;
+                            color: $white;
+                        }
+                    }
+                }
+            }
+            button{
+                color: $white;
+                font-size: 19px;
+                background-image: linear-gradient(143deg, #F3812A 0%, #E86400 100%);
+                border-radius: 30px;
+                min-width: auto;
+            }
+            .start-now{
+                font-size: 14px;
+                font-weight: 500;
+            }
+            p{
+                font-size: 16px;
+                line-height: 1.5;
+                color: $dark-blue;
+                margin-bottom: 20px;
+            }
+            .post-link{
+                font-size: 16px;
+                line-height: 1.5;
+                color: $blue-light;
+                text-decoration: none;
+            }
+            ul, ol{
+                padding: 0;
+                margin: 0 0 8px 0;
+                font-size: 16px;
+                line-height: 150%;
+                li{
+                    position: relative;
+                    padding-left: 18px;
+                    strong{
+                        font-family: 'Altone';
+                        font-weight: bold;
+                    }
+                    &:after{
+                        content: '';
+                        position: absolute;
+                        background: $dark-blue;
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 100%;
+                        left: 4px;
+                        top: 8px;                        
+                    }
+                }
+            }
+            
+            h2{
+                font-family: 'Altone Med';
+                font-weight: 500;
+                color: $dark-blue;
+                font-size: 22px;
+                line-height: 1.5;
+                margin-bottom: 7px;
+            }
+            
+            h3{
+                font-family: 'Altone Med';
+                font-weight: 500;
+                margin-bottom: 12px;
+                line-height: 1.5;
+                font-size: 22px;
+                color: $dark-blue;
+            }
+        } 
+
+        &-post{
+            width: 25%;
+            display: flex;
+            flex-direction: column;
+            row-gap: 20px;
+            position: sticky;
+            top: 80px;
+            @media(max-width: $md-767) {
+                width: 100%;
+            }
+            .left-side{
+                border: 1px solid $grey1;
+                border-radius: 12px;
+                background: $white;
+                .table-cont-heading{
+                    background: $grey1;
+                    display: flex;
+                    align-items: center;
+                    padding: 20px 26px;
+                    border-bottom: 1px solid $grey1;
+                    border: 1px solid $grey1;
+                    border-top-left-radius: 11px;
+                    border-top-right-radius: 11px;
+                    gap: 6px;
+                    h4{
+                        margin: 0;
+                        font-size: 16px;
+                        color: $dark;
+                    }
+                }
+                h3{
+                    font-size: 16px;
+                    color: $dark;
+                    padding: 7px 14px;
+                    margin-top: 21px;
+                    line-height: 100%;
+                    border-left: 2px solid $dark;
+                    margin-left: 26px;
+                }
+                ol{
+                    list-style: none;
+                    margin: 20px 0 21px 0;
+                    padding: 0;
+                    li{
+                        list-style: none;
+                        font-size: 16px;
+                        padding: 0 43px;
+                        line-height: 100%;
+                        margin-bottom: 20px;
+                        &:last-child{
+                            margin-bottom: 0;
+                        }
+                        a{
+                            color: $primary;
+                            text-decoration: underline;
+                        }
+                    }
+                }
+            }
+            .post-articles{
+                .recent-post-title{
+                    h4{
+                        line-height: 150%;
+                        font-weight: 700;
+                        color: $dark-blue;
+                        margin-bottom: 16px;
+                    }
+                }
+                .recent-posts-loop{
+                    .post-item{
+                        display: flex;
+                        margin-bottom: 24px;
+                        column-gap: 8px;
+                        @media(max-width: $md-991) {
+                            flex-direction: column;
+                            row-gap: 10px;
+                        }
+                        @media(max-width: $md-767) {
+                            flex-direction: row;
+                        }
+                        .post-item-img{
+                            width: 100px;
+                            height: 60px;
+                            img {
+                                height: 100%;
+                                width: 100%;
+                                object-fit: cover;
+                            }
+                        }
+                        a{
+                            img{
+                                border-radius: 12px;
+                                object-fit: cover;
+                            }
+                        }
+                        figcaption{
+                            display: flex;
+                            flex-direction: column;
+                            gap: 5px;
+                            margin-top: 5px;
+                            width: calc(100% - 108px);
+                            @media(max-width: $md-991) {
+                                width: 100%;
+                            }
+                            span{
+                                font-size: 14px;
+                                line-height: 1.16;
+                                font-weight: 500;
+                                color: $brown1;
+                            }
+                            a{
+                                font-size: 16px;
+                                line-height: 1.4;
+                                font-weight: 500;
+                                color: $blue-light;
+                                text-decoration: none;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    .newsletter {
+        margin: 0 0 100px 0 !important;
+        .news-bg-wrap{
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            h2{
+                text-align: center;
+                @media(max-width: $md-991) {
+                    margin-bottom: 12px;
+                }
+            }
+            p{
+                @media(max-width: $md-991) {
+                    margin-bottom: 10px;
+                }
+            }
+        }
+        .subscribe-box {
+            display: flex;
+            flex-wrap: wrap;
+            margin: 24px auto 0 auto;
+            position: relative;
+            width: 480px;
+            min-height: 48px;
+            input{
+                padding: 10px 20px;
+                border-radius: 8px;
+                border: none;
+                width: 100%;
+                background-color: $white;
+                box-shadow: 0 4px 60px 0 rgba(40, 55, 79, .1019607843);
+                color: #fff;
+                outline: 0;
+                font-size: 15px;
+                line-height: 24px;
+            }
+            .secondary-btn {
+                position: absolute;
+                padding: 11px 15px !important;
+                min-width: auto;
+                right: 1px;
+                top: 1px;
+                bottom: auto;
+                width: fit-content;
+                font-size: 16px;
+            }
+        }
+    }
+}

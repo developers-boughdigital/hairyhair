@@ -1,0 +1,85 @@
+.btn {
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: 0;
+    text-transform: uppercase;
+    padding: 12px 29px 10px;
+    min-width: 192px;
+    border: 2px solid transparent;
+    position: relative;
+    transition: all 0.3s ease-out 0s;
+    @include border-radius(10px);
+
+    @media (max-width: $lg-1620){
+        font-size: 14px;
+    }
+    @media (max-width: $lg-1280){
+        font-size: 12px;
+    }
+
+    span {
+        transition: all 0.3s ease-out 0s;
+    }
+
+    &:hover{
+        padding-left: 34px;
+        padding-right: 24px;
+        &::after {
+            content: "";
+            position: absolute;
+            background-image: url(../../assets/btn-arrow.png);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            max-width: 16px;
+            height: 100%;
+            top: auto;
+            left: 6px;
+            right: 0;
+            bottom: 0;
+            background-size: contain;
+        }
+    }    
+
+    &.primary-btn {
+        background-color: $secondary;
+        color: $white;
+
+        &:hover {
+            background-color: $dark;
+            color: $white;
+        }
+
+       
+    }
+
+    &.dark-btn {
+        background-color: $dark;
+        color: $white;
+
+        &:hover {
+            background-color: $secondary;
+            color: $dark;
+
+            &:hover::after {
+                filter: invert(1);
+            }
+        }
+    }
+    &.secondary-btn {
+        background-color: $secondary;
+
+        &:hover {
+            background-color: $dark;
+            color: $white;
+
+            span {
+                color: $white;
+            }
+        }
+    }
+    &.white-btn {
+        background-color: $white;
+    }
+}

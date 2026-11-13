@@ -1,0 +1,380 @@
+jQuery(document).ready(function ($) {
+  if (typeof hairyQuiz === "undefined") {
+    console.error(
+      "hairyQuiz object not found. Is hairy-frontend.js localized correctly?"
+    );
+    return;
+  }
+
+  $(".hairy-datepicker").datepicker({
+    dateFormat: "dd-mm-yy",
+    changeMonth: true,
+    changeYear: true,
+    yearRange: "-100:+0",
+    maxDate: "0",
+  });
+
+  const $quizForm = $("#hairy-frontend-quiz-form");
+  const $quizMessage = $("#hairy-quiz-message");
+  const $quizResultsDisplay = $("#hairy-quiz-results-display");
+  const $quizScore = $("#hairy-quiz-score");
+  const $quizRecommendations = $("#hairy-quiz-recommendations");
+  const $submitButton = $("#hairy-submit-quiz-button");
+  const $optionCard = $(".option-card");
+
+  function displayFrontendMessage(message, type) {
+    $quizMessage
+      .removeClass("success error")
+      .addClass(type)
+      .text(message)
+      .fadeIn();
+  }
+
+  $optionCard.on("click", function () {
+    $quizMessage.fadeOut();
+  });
+
+  $quizForm.on("submit", function (e) {
+    e.preventDefault();
+
+    let isValid = true;
+    var count = 1;
+
+    $(".hairy-quiz-question").each(function () {
+      if ($(this).hasClass('hairy-quiz-question-checkbox')) return;
+
+      const questionId = $(this).data("question_id");
+      const count_id = $(this).data("count_id"); // Only needed if you're using it later
+
+      const isSelected = $(`input[name="question_${questionId}"]:checked`).val();
+
+      if (!isSelected) {
+        isValid = false;
+        return false; // Breaks out of `.each()` early
+      }
+
+      count++;
+    });
+
+
+    if (!isValid) {
+      displaySteps(count);
+      displayFrontendMessage(hairyQuiz.required_fields_message, "error");
+      return;
+    } else {
+      $quizMessage.fadeOut();
+    }
+
+    $submitButton.prop("disabled", true).text("Submitting...");
+
+    const formData = $quizForm.serialize();
+    const quizType = $quizForm.data("quiz-type");
+    const finalFormData =
+      formData + "&quiz_type=" + encodeURIComponent(quizType);
+
+    $.ajax({
+      url: hairyQuiz.ajax_url,
+      type: "POST",
+      data: finalFormData,
+      success: function (response) {
+        $submitButton.prop("disabled", false).text("Submit Quiz");
+
+        displayFrontendMessage(response.data.message, "success");
+
+        if (response.success) {
+          if (window.location.href.includes("localhost")) {
+            window.location.href =
+              "http://localhost/tridev/hairy-hair/my-account/quiz/";
+          } else {
+            window.location.href = window.location.origin + "/my-account/quiz/";
+          }
+        } else {
+          displayFrontendMessage(response.data.message, "error");
+        }
+      },
+      error: function () {
+        $submitButton.prop("disabled", false).text("Submit Quiz");
+        displayFrontendMessage(hairyQuiz.quiz_error_message, "error");
+      },
+    });
+  });
+
+  $quizForm.on("input change", ".invalid-field", function () {
+    $(this).removeClass("invalid-field");
+  });
+
+  $quizForm.on(
+    "change",
+    '.hairy-quiz-question input[type="radio"]',
+    function () {
+      $(this)
+        .closest(".hairy-quiz-question")
+        .removeClass("invalid-question-section");
+    }
+  );
+});
+
+$(document).ready(function () {
+  let currentStep = 1;
+  const totalSteps = $("#multi-step-form .step").length;
+
+  function updateStepsProgressBar() {
+    const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+    $(".progress-bar").css("width", progressPercentage + "%");
+  }
+
+  window.displaySteps = function (stepNumber) {
+    if (stepNumber < 1 || stepNumber > totalSteps) return;
+
+    currentStep = stepNumber;
+
+    $(".step").hide();
+    $(".step-" + currentStep).show();
+
+    const isLastStep = currentStep === totalSteps;
+    const isFirstStep = currentStep === 1;
+
+    $(".prev-step-btn").toggle(!isFirstStep);
+    $(".next-step-btn")
+      .html(isLastStep ? "Submit" : "Next")
+      .attr("type", isLastStep ? "submit" : "button");
+
+    updateStepsProgressBar();
+  };
+
+  $(".next-step-btn").click(function () {
+    if (currentStep < totalSteps) {
+      $(".step-" + currentStep).addClass(
+        "animate__animated animate__fadeOutLeft"
+      );
+
+      setTimeout(function () {
+        $(".step").removeClass("animate__animated animate__fadeOutLeft").hide();
+        currentStep++;
+        $(".step-" + currentStep)
+          .show()
+          .addClass("animate__animated animate__fadeInRight");
+
+        displaySteps(currentStep);
+      }, 500);
+    }
+  });
+
+  $(".prev-step-btn").click(function () {
+    if (currentStep > 1) {
+      $(".step-" + currentStep).addClass(
+        "animate__animated animate__fadeOutRight"
+      );
+
+      setTimeout(function () {
+        $(".step")
+          .removeClass("animate__animated animate__fadeOutRight")
+          .hide();
+        currentStep--;
+        $(".step-" + currentStep)
+          .show()
+          .addClass("animate__animated animate__fadeInLeft");
+
+        displaySteps(currentStep);
+      }, 500);
+    }
+  });
+
+  displaySteps(1);
+});
+
+function attachFieldValidation($form) {
+  $form.find("input, select, textarea").on("blur change", function () {
+    validateField($(this));
+  });
+}
+
+function attachFieldValidationonSubmit($form) {
+  $form.find("input, select, textarea").each(function () {
+    validateField($(this));
+  });
+}
+
+function validateField($field) {
+  const value = $field.val().trim();
+  let hasError = false;
+  $field.removeClass("error");
+
+  if ($field.hasClass("required") && value === "") {
+    hasError = true;
+  }
+
+  if (
+    $field.hasClass("alpha") &&
+    value !== "" &&
+    !/^[a-zA-Z\s]+$/.test(value)
+  ) {
+    hasError = true;
+  }
+
+  if (
+    $field.hasClass("alphanumeric") &&
+    value !== "" &&
+    !/^[a-z0-9]+$/i.test(value)
+  ) {
+    hasError = true;
+  }
+
+  if (
+    $field.hasClass("numeric") &&
+    value !== "" &&
+    !/^[\d()+\s-]+$/.test(value)
+  ) {
+    hasError = true;
+  }
+
+  if (
+    $field.hasClass("numeric") &&
+    value !== "" &&
+    !/^[\d()+\s-;]+$/.test(value)
+  ) {
+    hasError = true;
+  }
+
+  if ($field.attr("type") === "email" && value !== "") {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(value)) {
+      hasError = true;
+    }
+  }
+
+  if (hasError) {
+    $field.addClass("error");
+  }
+}
+
+$(document).ready(function () {
+  const $leadForm = $("#hairy-frontend-get-started-form");
+  const $leadMessage = $("#hairy-lead-message");
+  const $leadSubmitButton = $("#hairy-submit-lead-button");
+  attachFieldValidation($leadForm);
+
+  function displayFrontendLeadMessage(message, type) {
+    $leadMessage
+      .removeClass("success error")
+      .addClass(type)
+      .text(message)
+      .fadeIn();
+  }
+
+  $leadForm.find("input").on("click", function (e) {
+    $("#hairy-lead-message").hide();
+    $(this).removeClass("error");
+  });
+
+  $leadForm.on("submit", function (e) {
+    e.preventDefault();
+
+    var step = 1;
+    var isValid = true;
+
+    attachFieldValidationonSubmit($leadForm);
+
+    $leadForm.find('input[type="text"], input[type="email"]').each(function () {
+      if ($(this).hasClass("required") && $(this).val().trim() === "") {
+        isValid = false;
+        $(this).addClass("error");
+        displaySteps(1);
+        displayFrontendLeadMessage(hairyQuiz.required_fields_message, "error");
+        return false;
+      }
+    });
+
+    if (!isValid) return;
+
+    const hairLossDurationChecked = $leadForm
+      .find('input[name="hair-loss-duration"]:checked')
+      .val();
+    const expectedResultsChecked = $leadForm
+      .find('input[name="expacted_results"]:checked')
+      .val();
+
+    if (
+      hairLossDurationChecked === undefined ||
+      expectedResultsChecked === undefined
+    ) {
+      isValid = false;
+      step = 2;
+    }
+
+    if (!isValid) {
+      displaySteps(step);
+      displayFrontendLeadMessage(hairyQuiz.required_fields_message, "error");
+      return;
+    }
+
+    const allergiesChecked = $leadForm
+      .find('input[name="allergies_or_sensitivities"]:checked')
+      .val();
+    const medicationsChecked = $leadForm
+      .find('input[name="taking_any_medications"]:checked')
+      .val();
+    const highBloodPressureChecked = $leadForm
+      .find('input[name="high_blood_pressure"]:checked')
+      .val();
+
+    if (
+      allergiesChecked === undefined ||
+      medicationsChecked === undefined ||
+      highBloodPressureChecked === undefined
+    ) {
+      isValid = false;
+      step = 3;
+    }
+
+    if (!isValid) {
+      displaySteps(step);
+      displayFrontendLeadMessage(hairyQuiz.required_fields_message, "error");
+      return;
+    }
+
+    $leadSubmitButton.prop("disabled", true).text("Submitting...");
+
+    $.ajax({
+      url: hairyQuiz.ajax_url,
+      type: "POST",
+      data: $leadForm.serialize(),
+      success: function (response) {
+        $leadSubmitButton.prop("disabled", false).text("Submit Quiz");
+        displayFrontendLeadMessage(response.data.message, "success");
+
+        if (response.success) {
+          if (window.location.href.includes("localhost")) {
+            window.location.href =
+              "http://localhost/tridev/hairy-hair/my-account/quiz/";
+          } else {
+            window.location.href = window.location.origin + "/my-account/quiz/";
+          }
+        } else {
+          displayFrontendLeadMessage(response.data.message, "error");
+        }
+      },
+      error: function () {
+        $leadSubmitButton.prop("disabled", false).text("Submit Quiz");
+        displayFrontendLeadMessage(hairyQuiz.quiz_error_message, "error");
+      },
+    });
+  });
+});
+
+ 
+$(document).ready(function() {
+  $('.step-14 input').on('change', function() {
+    $('.question-file-input').hide()
+    if ($(this).val() === '52') {
+      $('.question-file-input').show()
+    }
+  });
+}); 
+
+
+
+
+
+  
+

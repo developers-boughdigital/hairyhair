@@ -1,0 +1,2398 @@
+/*
+ * ACF Flexible Content Components – compiled styles
+ * Source: src/scss/_component.scss (components section)
+ */
+
+/* Responsive iframe video embed */
+.component-video-wrapper{
+    position:relative;
+    padding-bottom:56.25%;
+    height:0;
+    overflow:hidden;
+    border-radius:8px
+}
+
+.component-video-wrapper iframe{
+    position:absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    border:0
+}
+
+/* Hero Split */
+.component-hero-split{
+    overflow:hidden
+}
+
+.component-hero-split .hero-split-eyebrow{
+    display:inline-block;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:#b5804d;
+    margin-bottom:12px
+}
+
+.component-hero-split .hero-split-headline{
+    font-size:clamp(28px,4vw,52px);
+    line-height:1.15;
+    margin-bottom:20px
+}
+
+.component-hero-split .hero-split-image{
+    max-width:100%;
+    height:100%;
+    object-fit:contain;
+    object-position:right bottom;
+    display:block;
+    margin-left:auto
+}
+
+@media(max-width:991px){
+    .component-hero-split .hero-split-image{
+    height:auto;
+    max-height:400px;
+    margin-top:30px
+}
+}
+
+/* Hero Classic (homepage) – right image overflow from screen edge */
+.page-with-components .main-banner-content{
+    overflow:visible;
+    min-height:80vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center
+}
+
+.page-with-components .main-banner-content .ban-right-img{
+    z-index:1
+}
+
+@media(max-width:991px){
+ .page-with-components  .main-banner-content{
+    min-height:auto
+}
+
+ .page-with-components .main-banner-content .ban-right-img{
+    position:relative!important;
+    left:auto!important;
+    top:auto!important;
+    bottom:auto!important;
+    right:auto!important;
+    display:flex;
+    justify-content:center;
+    overflow:visible
+}
+
+  .page-with-components .main-banner-content .ban-hero-img{
+    height:auto!important;
+    max-height:320px!important;
+    width:100%!important;
+    object-position:center center!important;
+    margin:16px auto 0
+}
+
+}
+
+/* Hero Video */
+.component-hero-video{
+    padding:60px 0
+}
+
+.component-hero-video .hero-video-content{
+    margin-bottom:12px
+}
+
+/* Text + Image Overlap */
+.component-text-image-overlap{
+    padding:80px 0
+}
+
+.component-text-image-overlap .tio-title{
+    font-size:clamp(24px,3vw,42px);
+    margin-bottom:18px
+}
+
+.component-text-image-overlap .tio-image-wrap{
+    position:relative;
+    display:inline-block;
+    width:100%;
+    margin-bottom:40px
+}
+
+@media(min-width:992px){
+    .component-text-image-overlap .tio-image-wrap{
+    margin-bottom:0
+}
+}
+.component-text-image-overlap .tio-main-image{
+    border-radius:8px;
+    width:100%
+}
+
+.component-text-image-overlap .tio-overlap-image{
+    position:absolute;
+    bottom:-30px;
+    width:45%;
+    border-radius:8px;
+    box-shadow:0 10px 40px rgba(0,0,0,.18);
+    background:#fff;
+    padding:6px
+}
+
+.component-text-image-overlap .tio-label{
+    display:inline-block;
+    background:#b5804d;
+    color:#fff;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:4px 12px;
+    border-radius:4px;
+    margin-bottom:14px
+}
+
+/* Image Text Card */
+.component-image-text-card .each-treatment{
+    transition:box-shadow .2s ease
+}
+
+.component-image-text-card .each-treatment:hover{
+    box-shadow:0 8px 32px rgba(0,0,0,.12)
+}
+
+.component-image-text-card .itc-tag{
+    display:inline-block;
+    font-size:11px;
+    font-weight:700;
+    letter-spacing:1px;
+    text-transform:uppercase;
+    padding:3px 10px;
+    border-radius:3px;
+    background:rgba(0,0,0,.08)
+}
+
+/* CTA Inline Strip */
+.component-cta-inline-strip{
+    padding:30px 0
+}
+
+@media(max-width:767px){
+  .component-cta-inline-strip .cta-strip-left,
+  .component-cta-inline-strip .cta-strip-right{
+    width:100%;
+    justify-content:center;
+    text-align:center
+}
+
+}
+
+/* Text Columns */
+.component-text-columns{
+    padding:60px 0
+}
+
+.component-text-columns .text-column-item{
+    padding:0 16px 40px
+}
+
+.component-text-columns .text-column-item h4{
+    margin-bottom:12px
+}
+
+/* Card / Testimonial shared */
+.component-testimonial-card{
+    background:#fff;
+    border-radius:8px;
+    padding:24px;
+    height:100%
+}
+
+.testimonial-stars{
+    color:#f5a623;
+    font-size:18px;
+    margin-bottom:12px
+}
+
+.testimonial-quote{
+    font-style:italic;
+    margin-bottom:16px
+}
+
+/* Text Image */
+.component-text-image{
+    padding:60px 0
+}
+
+/* Hero Banner */
+.component-hero-banner{
+    padding:80px 0
+}
+
+/* CTA Banner */
+.component-cta-banner{
+    padding:80px 0
+}
+
+/* FAQ */
+.component-faq{
+    padding:60px 0
+}
+
+/* Cards Grid */
+.component-cards-grid{
+    padding:60px 0
+}
+
+.component-card{
+    background:#fff;
+    border-radius:8px;
+    padding:24px;
+    height:100%;
+    transition:box-shadow .2s ease
+}
+
+.component-card:hover{
+    box-shadow:0 6px 24px rgba(0,0,0,.1)
+}
+
+/* ── Product Grid – shop_section Block 1 ────────────────────────────────────
+   Matches the 4-column card layout with badge, image ratio, price & ATC btn
+   ─────────────────────────────────────────────────────────────────────────── */
+.component-product-grid{
+    padding:60px 0
+}
+
+.pg-section-title{
+    font-size:clamp(22px,3vw,34px);
+    color:#122B51
+}
+
+/* Card shell */
+.pg-card {
+    background: #fff;
+    border: none;
+    border-radius: 16px;
+    overflow: hidden;
+    padding: 10px;
+    padding-top: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    padding-left: 10px;
+}
+
+/* Image area */
+.pg-card-img-link{
+    display:block;
+    line-height:0
+}
+
+.pg-card-img-wrap {
+    position: relative;
+    width: 100%;
+    overflow: hidden;
+    height: 322px;
+    background: #f0f0f0;
+    border-radius: 10px;
+}
+
+.pg-card-img-ratio{
+    background:#f0f0f0;
+    border-radius: 10px;
+}
+
+.pg-card-img-wrap img,.pg-card-img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    object-position: bottom;
+    display:block;
+        border-radius: 10px;
+}
+
+/* Badge – top-right pill */
+.pg-badge{
+    top:12px;
+    right:12px;
+    font-size:12px;
+    font-weight:700;
+    letter-spacing:.3px;
+    padding:5px 14px;
+    border-radius:50px;
+    color:#fff;
+    line-height:1.3;
+    z-index:2
+}
+
+/* Card body */
+.pg-card-body{
+    padding:20px 4px 8px
+}
+
+.pg-card-title{
+    display:block;
+    font-size:18px;
+    font-weight:700;
+    color:#122B51;
+    line-height:1.4;
+    margin-bottom:10px;
+    text-align: center;
+}
+
+.pg-card-title a{
+    color:inherit;
+    text-decoration:none
+}
+
+.pg-card-title a:hover,.pg-card-title a:focus{
+    color:#1a3f73;
+    text-decoration:none
+}
+
+.pg-card-title:hover,.pg-card-title:focus{
+    color:#1a3d73;
+    text-decoration:none
+}
+
+.pg-card-excerpt,.pg-card-desc{
+    font-size:14px;
+    color:#6b7280;
+    line-height:1.6;
+    margin-bottom:0;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden
+}
+
+.pg-card-cat{
+    display:inline-block;
+    font-size:12px;
+    font-weight:600;
+    color:#3D7CD1;
+    text-transform:uppercase;
+    letter-spacing:.6px;
+    margin-bottom:8px
+}
+
+.pg-card-date{
+    display:block;
+    font-size:12px;
+    color:#9ca3af;
+    margin-top:8px
+}
+
+.pg-card-price{
+    font-size:15px;
+    font-weight:700;
+    color:#122B51;
+    padding-top:10px
+}
+
+.pg-price-label{
+    font-size:14px;
+    font-weight:400;
+    margin-right:2px
+}
+
+/* ATC footer */
+.pg-card-footer{
+    padding:12px 4px 4px
+}
+
+.pg-atc-btn{
+    background-color:#122B51;
+    color:#fff!important;
+    font-weight:600;
+    font-size:14px;
+    padding:11px 16px;
+    border-radius:8px;
+    border:none;
+    letter-spacing:.3px;
+    transition:background-color .2s ease
+}
+
+.pg-atc-btn:hover,.pg-atc-btn:focus{
+    background-color:#1c3f73;
+    color:#fff!important;
+    text-decoration:none
+}
+
+/* Posts grid section header */
+.component-posts-grid .pg-title{
+  font-weight:700;
+    color:#122B51;
+    margin-bottom:8px
+}
+
+.component-posts-grid .pg-subtitle{
+    font-size:16px;
+    color:#6b7280;
+    margin-bottom:0
+}
+
+/* Responsive tweaks */
+@media(max-width:767px){
+    .component-product-grid,.component-posts-grid{
+    padding:40px 0
+}
+}
+@media(max-width:575px){
+  .pg-card-title{
+    font-size:16px
+}
+
+  .pg-card-excerpt,.pg-card-desc{
+    font-size:13px
+}
+
+  .pg-atc-btn{
+    font-size:13px;
+    padding:10px 14px
+}
+
+}
+
+/* ── Before / After Slider ───────────────────────────────────────────────────
+   Matches reference: center-magnified active slide, dimmed side peeks,
+   BEFORE/AFTER pill labels, drag handle, Trustpilot bar, yellow CTA btn
+   ─────────────────────────────────────────────────────────────────────────── */
+
+/* Section */
+.component-ba-slider{
+    overflow:hidden
+}
+
+/* Header */
+.ba-header{
+    margin-bottom:24px
+}
+
+.ba-title{
+    font-weight:700;
+    color:#fff;
+    margin-bottom:32px;
+    line-height:1.2
+}
+
+.ba-subtitle{
+    font-size:16px;
+    color:rgba(255,255,255,.88);
+    max-width:540px;
+    margin:0 auto 32px;
+    line-height:1.6
+}
+
+/* Trustpilot bar */
+.ba-trustpilot{
+    margin-bottom: 58px;
+    gap:8px
+}
+
+.ba-tp-label{
+    font-size:16px;
+    font-weight:700;
+    color:#fff
+}
+
+.ba-tp-stars{
+    display:inline-flex;
+    align-items:center;
+    gap:2px
+}
+
+.ba-tp-rating{
+    font-size:14px;
+    color:rgba(255,255,255,.9)
+}
+
+.ba-tp-logo{
+    display:inline-flex;
+    align-items:center;
+    gap:4px;
+    font-size:14px;
+    font-weight:700;
+    color:#fff
+}
+
+/* Carousel wrapper – clips side overflow to show side peeks */
+.ba-carousel{
+    position:relative;
+    overflow:visible;
+    padding:20px 0 30px
+}
+
+/* Track – all slides in a row, JS drives translateX */
+.ba-track{
+  display:flex;
+  align-items:center;
+  gap:16px;
+  will-change:transform;
+  user-select:none;
+}
+
+/* Every slide */
+.ba-slide{
+  flex:0 0 auto;
+  width:490px;
+  border-radius:16px;
+  overflow:hidden;
+  transform:scale(0.82);
+  opacity:0.45;
+  transition:transform .35s ease, opacity .35s ease;
+  cursor:pointer;
+  filter:brightness(0.75);
+}
+
+/* Active / center slide */
+.ba-slide.is-active{
+  transform:scale(1);
+  opacity:1;
+  filter:none;
+  z-index:10;
+  position:relative;
+}
+
+/* Before/After comparison figure */
+.ba-comparison {
+    position: relative;
+    width: 100%;
+    background: #ffff;
+    border-radius: 16px;
+    overflow: hidden;
+    touch-action: none;
+    border: 2px solid #fff;
+}
+
+.ba-comparison figure{
+    position:relative;
+    margin:0;
+    padding:0;
+    display:block;
+    width:100%;
+    aspect-ratio:1/1
+}
+
+.ba-img{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block;
+    pointer-events:none
+}
+
+.ba-img--before{
+    clip-path:inset(0 50% 0 0)
+}
+
+/* Divisor line */
+.ba-divisor{
+  position:absolute;
+  top:0;
+    bottom:0;
+  left:50%;
+  width:2px;
+  background:#fff;
+  transform:translateX(-50%);
+  pointer-events:none;
+  z-index:4;
+}
+
+/* Drag handle – hidden on inactive slides */
+.ba-slide .ba-divisor,
+.ba-slide .ba-handle{
+  opacity:0;
+  pointer-events:none;
+}
+
+.ba-slide.is-active .ba-divisor{
+  opacity:1;
+  pointer-events:none;
+}
+
+.ba-slide.is-active .ba-handle{
+  opacity:1;
+  pointer-events:auto;
+}
+
+.ba-handle{
+  position:absolute;
+  top:50%;
+  left:50%;
+  transform:translate(-50%,-50%);
+  width:40px;
+    height:40px;
+  background:rgba(255,255,255,.25);
+  backdrop-filter:blur(4px);
+  border:2px solid rgba(255,255,255,.6);
+  border-radius:50%;
+  display:flex;
+    align-items:center;
+    justify-content:center;
+  cursor:ew-resize;
+  z-index:5;
+  touch-action:none;
+  user-select:none;
+  -webkit-user-select:none;
+}
+
+/* BEFORE / AFTER pill labels */
+.ba-label{
+  position:absolute;
+  top:14px;
+  font-size:12px;
+    font-weight:700;
+    letter-spacing:.8px;
+  padding:5px 14px;
+  border-radius:50px;
+  z-index:6;
+  pointer-events:none;
+}
+
+.ba-label--before {
+    left: 12px;
+    /* background: rgba(255, 255, 255, .22);
+     */
+    color: #122B51;
+    background: #FFFFFFB2;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    border-radius: 10px;
+    padding: 12px 30px;
+}
+
+.ba-label--after{
+    right: 12px;
+    color: #3D7CD1;
+    background: #FFFFFFB2;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    border-radius: 10px;
+    padding: 12px 30px;
+
+}
+
+/* Hidden range input – disabled, drag is handled via JS on .ba-handle */
+.ba-range{
+  display:none;
+  pointer-events:none;
+}
+
+/* Slide caption + meta */
+.ba-slide-info{
+    padding:14px 8px 0;
+    color:#fff
+}
+
+.ba-caption{
+    display:block;
+    font-size:14px;
+    font-weight:600;
+    margin-bottom:6px;
+    color:#fff
+}
+
+.ba-meta{
+    display:flex;
+    justify-content:center;
+    gap:20px;
+    font-size:14px;
+    color:rgba(255,255,255,.85)
+}
+
+.ba-meta strong{
+    color:#fff
+}
+
+/* CTA button – yellow pill */
+.ba-cta{
+    margin-top:36px
+}
+
+.ba-cta-btn{
+    background: #E9A825;
+    color: #122B51 !important;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: .8px;
+    text-transform: uppercase;
+    padding: 16px 48px;
+    border-radius: 10px;
+    border: none;
+    transition: background .2s ease, transform .15s ease;
+}
+
+.ba-cta-btn:hover,.ba-cta-btn:focus{
+    background:#d4941e;
+    color:#fff!important;
+    transform:translateY(-1px)
+}
+
+/* Nav buttons – mobile only */
+.ba-nav{
+  display:none;
+}
+
+.ba-nav-row{
+  display:none;
+}
+
+/* Responsive */
+@media(max-width:991px){
+  .ba-slide{
+    width:300px
+}
+
+}
+
+@media(max-width:767px){
+  .ba-slide{
+    width:82vw;
+    transform:scale(0.88);
+    opacity:0.5
+}
+
+  .ba-slide.is-active{
+    transform:scale(1);
+    opacity:1
+}
+
+  .ba-track{
+    gap:12px
+}
+
+  /* .ba-title{
+    font-size:clamp(22px,6vw,32px)
+} */
+
+  .ba-nav-row{
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    gap:16px;
+    margin-top:20px;
+
+}
+
+  .ba-nav{
+    display:flex;
+    position:static;
+    transform:none;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    background:rgba(255,255,255,.25);
+    backdrop-filter:blur(4px);
+    border:2px solid rgba(255,255,255,.5);
+    cursor:pointer;
+    align-items:center;
+    justify-content:center;
+    transition:background .2s;
+    flex-shrink:0;
+
+}
+
+  .ba-nav:hover{
+    background:rgba(255,255,255,.4)
+}
+
+}
+
+/* ── Treatment Plans Cards (.component-treatment-plans) ─────────────────────
+   Matches reference: 3-col cards, top image, title, price, checklist, CTA btn
+   ─────────────────────────────────────────────────────────────────────────── */
+.component-treatment-plans{
+    padding:80px 0
+}
+
+.component-treatment-plans .tp-section-header{
+    max-width:680px;
+    margin:0 auto 48px;
+    text-align:center
+}
+
+.component-treatment-plans .tp-section-header h2{
+    font-size:clamp(26px,3.5vw,38px);
+    font-weight:700;
+    color:#0D2445;
+    margin-bottom:14px;
+    line-height:1.2
+}
+
+.component-treatment-plans .tp-section-header p{
+    font-size:16px;
+    line-height:1.6;
+    color:#3D506A;
+    margin-bottom:0
+}
+
+.component-treatment-plans .tp-cards-row{
+    row-gap:30px
+}
+
+.component-treatment-plans .tp-card-col{
+    display:flex
+}
+
+.component-treatment-plans .tp-card{
+  display:flex;
+    flex-direction:column;
+    border-radius:16px;
+    overflow:hidden;
+  width:100%;
+    box-shadow:0 2px 12px rgba(0,0,0,.07);
+  transition:box-shadow .25s ease,transform .25s ease;
+}
+
+.component-treatment-plans .tp-card:hover{
+    box-shadow:0 6px 24px rgba(0,0,0,.12);
+    transform:translateY(-3px)
+}
+
+.component-treatment-plans .tp-card-img{
+    width:100%;
+    aspect-ratio:4/3;
+    overflow:hidden
+}
+
+.component-treatment-plans .tp-card-img img{
+    width:100%;
+    height:100%;
+    object-fit:cover;
+    display:block
+}
+
+.component-treatment-plans .tp-card-body{
+    display:flex;
+    flex-direction:column;
+    flex:1;
+    padding:24px 24px 28px
+}
+
+.component-treatment-plans .tp-card-title{
+    font-size:22px;
+    font-weight:700;
+    color:#0D2445;
+    margin-bottom:6px
+}
+
+.component-treatment-plans .tp-card-price{
+    font-size:14px;
+    font-weight:700;
+    color:#0D2445;
+    margin-bottom:20px
+}
+
+.component-treatment-plans .tp-card-features{
+    list-style:none;
+    padding:0;
+    margin:0 0 auto;
+    display:flex;
+    flex-direction:column;
+    gap:12px
+}
+
+.component-treatment-plans .tp-card-features li{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    font-size:14px;
+    line-height:1.55;
+    color:#3D506A
+}
+
+.component-treatment-plans .tp-check-icon{
+    flex-shrink:0;
+    margin-top:1px
+}
+
+.component-treatment-plans .tp-check-icon svg{
+    display:block
+}
+
+.component-treatment-plans .tp-card-cta{
+    margin-top:24px
+}
+
+.component-treatment-plans .tp-card-cta .btn{
+    width:100%;
+    text-align:center;
+    text-transform:uppercase;
+    font-weight:700;
+    letter-spacing:.04em;
+    padding:14px 20px;
+    border-radius:8px
+}
+
+@media(max-width:991px){
+  .component-treatment-plans .tp-card-col{
+    margin-bottom:0
+}
+
+}
+
+@media(max-width:767px){
+  .component-treatment-plans{
+    padding:50px 0
+}
+
+  .component-treatment-plans .tp-section-header{
+    margin-bottom:32px
+}
+
+  .component-treatment-plans .tp-cards-row{
+    row-gap:24px
+}
+
+  .component-treatment-plans .tp-card-img{
+    aspect-ratio:16/9
+}
+
+}
+
+.component-shop-section .pg-card{
+    border: 1px solid #D9D9D9
+}
+
+.outline-btn {
+    background: transparent;
+    color: #fff;
+    border: 1px solid #febc5e;
+}
+
+.outline-btn:hover {
+    border: 1px solid #febc5e;
+}
+
+.info-btn {
+    display: inline-block;
+    background: #C7E9FF;
+    color: #000;
+    font-weight: bold;
+    border-radius: 5px;
+    font-size: 14px;
+    line-height: 20px;
+    padding: 5px;
+    margin: 10px!important;
+}
+
+/* All these just extra style over the old style */
+.hair-gummies-new h1 {
+    font-size: 44px;
+    margin: 10px 0;
+}
+
+.hair-gummies-new .contact-btn {
+    margin-top: 100px;
+}
+
+/* .hair-gummies-new .large-btn {
+    padding: 18px 30px 18px;
+} */
+
+.page-with-components .hair-gummies-new .main-banner-content.hairphill-main-ban .ban-left-content {
+    max-width: 570px;
+}
+
+.hair-gummies-new .main-banner-content p {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.hair-gummies-new .hiding-sec {
+    padding: 45px 0;
+    margin: 24px 16px 0 16px;
+}
+
+.hair-gummies-new .hiding-sec .row {
+    max-width: 1200px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+}
+
+.hair-gummies-new h2 {
+    font-size: 32px;
+    line-height: 32px;
+}
+
+.hair-gummies-new .product-content p {
+    display: flex;
+    flex-direction: row;
+    font-size: 14px;
+    line-height: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.hair-gummies-new .hiding-sec .right-content ul {
+    gap: 10px;
+}
+
+.hair-gummies-new .hiding-sec .right-content ul li {
+    font-size: 12px;
+    letter-spacing: 0;
+}
+
+.hair-gummies-new .hiding-sec .left-img {
+    width: 100%;
+    height: 100%;
+}
+
+.hair-gummies-new .hiding-sec .left-img img {
+    display: block;
+    object-fit: cover;
+    width: 100%;
+    height: 100%;
+}
+
+
+.hair-gummies-new .right-content {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    vertical-align: middle;
+    height: 100%;
+}
+
+.hair-gummies-new .before-after {
+    display: flex;
+    margin-top: 20px;
+}
+
+.hair-gummies-new .before-after-image {
+    margin-right: 37px;
+    width: 270px;
+    height: 176px;
+}
+
+.hair-gummies-new .before-after-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.hair-gummies-new .before-after-info {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hair-gummies-new .before-after-info .ba-item p {
+    font-size: 12px;
+    margin: 0;
+    line-height: 17px;
+}
+
+.hair-gummies-new .before-after-info .ba-item {
+    margin-bottom: 17px;
+}
+
+.hair-gummies-new .before-after-info .ba-item:last-child {
+    margin-bottom: 0px;
+}
+
+@media screen and (max-width: 768px) {
+    .hair-gummies-new .before-after {
+        display: block;
+    }
+
+    .hair-gummies-new .before-after .before-after-info {
+        margin-top: 17px;
+    }
+
+    .hair-gummies-new .before-after-image {
+        width: 100%;
+        height: auto;
+    }
+
+    .hair-gummies-new .product-content p span {
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+
+
+/* How it works */
+.hair-gummies-new .steps-to-fllow .step-animation .step {
+    display: block;
+    min-height: auto;
+    max-width: 240px;
+    padding: 27px 15px 55px;
+}
+
+.hair-gummies-new .steps-to-fllow .step-animation .step .step-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+.hair-gummies-new .steps-to-fllow .step-footer .step-icon {
+    width: 36px;
+    height: 36px;
+}
+
+.hair-gummies-new .steps-to-fllow .step-footer .step-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.hair-gummies-new .steps-to-fllow .step-footer .step-footer-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hair-gummies-new .steps-to-fllow .step-footer .step-footer-wrap h6,
+.hair-gummies-new .steps-to-fllow .step-footer .step-footer-wrap p {
+    color: #3D7ECE;
+    font-size: 14px;
+    margin: 0;
+}
+
+.hair-gummies-new .steps-to-fllow .step-footer .step-footer-wrap h6 {
+    font-weight: 600;
+}
+
+.hair-gummies-new .steps-to-fllow .step-animation .step h5 {
+    margin-top: 27px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+.hair-gummies-new .steps-to-fllow .step-animation .step p {
+    font-size: 10px;
+    letter-spacing: 0px;
+    line-height: 20px;
+}
+
+.hair-gummies-new #how-it-works .global-title {
+    margin-bottom: 0;
+}
+
+.hair-gummies-new #how-it-works {
+    margin: 75px 0;
+}
+
+.hair-gummies-new #how-it-works h2 {
+    font-size: 32px;
+    margin-bottom: 37px
+}
+
+/* proven-treatment-stage */
+.hair-gummies-new .proven-treatment-stage {
+    text-align: center;
+    background-color: #ffffff;
+    padding: 65px 0;
+    margin: 0 16px;
+    border-radius: 16px;
+}
+
+.hair-gummies-new .proven-treatment-desc {
+    font-family: 'Altone';
+    font-size: 14px;
+    line-height: 23px;
+    color: #0B1D38;
+    max-width: 550px;
+    margin: 0 auto;
+    margin-bottom: 30px;
+}
+
+.hair-gummies-new .proven-stages {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.hair-gummies-new .proven-stages .stage {
+    padding: 27px 32px;
+    background-color: #EEF2F6;
+    border-radius: 12px;
+    width: calc(( 100% / 3 ) - 26px );
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.hair-gummies-new .proven-stages .stage:last-child {
+    margin-right: 0;
+}
+
+.hair-gummies-new .proven-stages .stage img.stage-img {
+    display: block;
+    width: 100%;
+    height: 217px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+.hair-gummies-new .proven-stages .stage h3.stage-title {
+    font-size: 24px;
+    margin-top: 27px;
+    margin-bottom: 0;
+    text-align: left;
+}
+
+.hair-gummies-new .proven-stages .stage p.stage-sub-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-bottom: 26px;
+    text-align: left;
+}
+
+.hair-gummies-new .proven-stages .stage li.check-list {
+    text-align: left;
+    padding-left: 30px;
+    position: relative;
+    margin-bottom: 13px;
+    line-height: 15px;
+}
+
+.hair-gummies-new .proven-stages .stage li.check-list:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    background-image: url('../../assets/blue-tick-icon.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+
+.hair-gummies-new .proven-stages .stage li.check-list span {
+    font-size: 12px;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+
+.hair-gummies-new .proven-stages .stage a.btn.secondary-btn {
+    margin-top: 13px;
+    width: 100%;
+}
+
+@media screen and (max-width: 1024px) {
+
+    .hair-gummies-new .proven-stages .stage {
+        margin-bottom: 26px;
+        width: calc(( 100% / 2) - 13px );
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .hair-gummies-new .proven-stages .stage {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+/* why-choose-hair */
+.hair-gummies-new .why-choose-hair {
+    background: none;
+    padding: 65px 0;
+    margin: 0;
+}
+
+.treatments-effect {
+    padding: 0 0 35px;
+}
+
+.hair-gummies-new .treatment-slide {
+    background: #fff;
+    padding: 15px;
+    border-radius: 8px;
+}
+
+.hair-gummies-new .treatments-effect .treatment-slider.slick-slider.bottom-arrows .slick-prev,
+.hair-gummies-new .treatments-effect .treatment-slider.slick-slider.bottom-arrows .slick-next {
+    display: none !important;
+}
+
+.hair-gummies-new .treatments-effect .global-title {
+    max-width: 485px;
+}
+
+.hair-gummies-new .treatments-effect .global-title p {
+    font-size: 14px;
+}
+
+.hair-gummies-new .treatments-effect .treatment-slider .slick-list .treatment-slide img {
+    width: 100%;
+    border-radius: 8px;
+    height: 200px;
+    object-fit: cover;
+}
+
+.hair-gummies-new .treatments-effect .treatment-slider .slick-list .treatment-slide .comparing-desc {
+    max-width: 307px;
+    margin: 0 auto;
+}
+
+.hair-gummies-new .treatments-effect .treatment-slider .slick-list .treatment-slide .comparing-desc * {
+    text-align: center;
+    margin-top: 43px;
+    font-size: 12px;
+    line-height: 20px;
+    letter-spacing: 0;
+}
+
+/* why-choose-us */
+.hair-gummies-new .why-choose-us {
+    background: #0B1D38;
+    margin: 0 16px;
+    padding: 65px 0;
+    border-radius: 16px;
+    margin-bottom: 50px;
+}
+
+.hair-gummies-new .why-choose-us .global-title {
+    margin-bottom: 0;
+}
+
+.hair-gummies-new .why-choose-us h2 {
+    color: #fff;
+    margin-bottom: 0;
+}
+
+.hair-gummies-new .why-choose-us .why-right-content {
+    text-align: center;
+    display: flex;
+    flex-wrap: wrap;
+
+}
+
+.hair-gummies-new .why-choose-us .why-right-content .growth-box {
+    width: calc(100% / 3);
+    height: auto;
+    margin-top: 60px;
+}
+
+.hair-gummies-new .why-choose-us .why-right-content .growth-box h6 {
+    font-size: 24px;
+    line-height: normal;
+    letter-spacing: 0;
+    color: #fff;
+    font-weight: 600;
+    margin-top: 16px;
+}
+
+.hair-gummies-new .why-choose-us #counter .item {
+    margin-top: 30px;
+}
+
+.hair-gummies-new .why-choose-us .why-right-content .growth-box p {
+    color: #fff;
+    font-size: 12px;
+    font-weight: 400;
+    max-width: 240px;
+    margin: 0 auto;
+    margin-top: 8px;
+}
+
+@media screen and (max-width: 1024px) {
+    .hair-gummies-new .why-choose-us .why-right-content .growth-box {
+        width: calc(100% / 2);
+    }
+}
+
+@media screen and (max-width:768px) {
+    .hair-gummies-new .why-choose-us .why-right-content .growth-box {
+        width: calc(100% / 1);
+        margin-top: 30px;
+    }
+}
+
+.hair-gummies-new .why-choose-us .why-us-stages .why-us-stages-wrapper a {
+    margin-top: 30px;
+}
+
+#hairjourney {
+    background: #fff;
+    margin: 0 16px;
+    border-radius: 16px;
+    padding: 80px;
+    text-align: center;
+    margin-bottom: 75px;
+}
+
+#hairjourney.steps-to-fllow .steps-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+}
+
+#hairjourney.steps-to-fllow .step-animation .journey-step {
+    background: white;
+    z-index: 1;
+    display: flex;
+    flex-wrap: wrap;
+    border-radius: 16px;
+    padding: 30px 20px;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity .8s ease, transform .8s ease;
+
+}
+
+.hair-gummies-new #hairjourney.steps-to-fllow .step-animation .journey-step.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#hairjourney.steps-to-fllow .step-animation .arrow {
+    transition: left 4s 
+ease, opacity .3s 
+ease;
+}
+#hairjourney.steps-to-fllow .step-animation .timeline::after {
+    left: 0;
+}
+
+.hair-gummies-new #hairjourney.steps-to-fllow .step-animation .journey-step h5 {
+    font-size: 24px;
+    margin-bottom: 6px;
+}
+
+.hair-gummies-new #hairjourney.steps-to-fllow .step-animation .journey-step p {
+    font-size: 12px;
+    max-width: 225px;
+    margin: 0 auto;
+}
+
+.hair-gummies-new #hairjourney.steps-to-fllow .step-animation .journey-timeline {
+    position: absolute;
+    top: 50%;
+    bottom: auto;
+    left: 0;
+    height: 2px;
+    width: 0;
+    background-image: linear-gradient(to right, #0a2540 33%, transparent 0);
+    background-size: 16px 2px;
+    background-repeat: repeat-x;
+    z-index: 1;
+    transition: width 4s ease;
+}
+
+.hair-gummies-new #hairjourney.steps-to-fllow .step-animation .journey-timeline::after {
+    position: absolute;
+    height: 15px;
+    width: 15px;
+    border-radius: 100%;
+    content: "";
+    background: #3d506a;
+    top: auto;
+    margin-top: -6px;
+    left: -6px;
+}
+
+.product-pill-right .btn{
+    width: 100%;
+}
+.why-choose-us .wcu-subtitle{
+        max-width: 887px;
+    margin: auto;
+    color: #ffff;
+}
+.proven-treatment-stage {
+    text-align: center;
+    background-color: #ffffff;
+    padding: 65px 0;
+    margin: 0 16px;
+    border-radius: 16px;
+}
+.proven-treatment-stage .proven-treatment-desc {
+    font-family: 'Altone', sans-serif;
+    font-size: 14px;
+    line-height: 23px;
+    color: #0B1D38;
+    max-width: 550px;
+    margin: 0 auto;
+    margin-bottom: 30px;
+}
+.proven-treatment-stage .proven-stages {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+.proven-treatment-stage .proven-stages .stage {
+    padding: 10px;
+    background-color: #EEF2F6;
+    border-radius: 12px;
+    width: calc(( 100% / 3 ) - 26px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+.proven-treatment-stage .proven-stages .stage:last-child { margin-right: 0; }
+.proven-treatment-stage .proven-stages .stage img.stage-img {
+    display: block;
+    width: 100%;
+    height: 217px;
+    object-fit: cover;
+    border-radius: 12px;
+}
+.proven-treatment-stage .proven-stages .stage h3.stage-title {
+     font-size: 24px;
+    margin-top: 10px;
+    margin-bottom: 0;
+    text-align: left;
+    padding: 0px 10px;
+}
+.proven-treatment-stage .proven-stages .stage p.stage-sub-title {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0;
+    margin-bottom: 26px;
+    text-align: left;
+    padding: 0px 10px;
+}
+.proven-treatment-stage .proven-stages .stage .stage-details {
+    padding: 0px 10px;
+}
+.proven-treatment-stage .proven-stages .stage li.check-list {
+    text-align: left;
+    padding-left: 30px;
+    position: relative;
+    margin-bottom: 13px;
+    line-height: 15px;
+    list-style: none;
+}
+.proven-treatment-stage .proven-stages .stage li.check-list:before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 18px;
+    height: 18px;
+    background-image: url('../../assets/blue-tick-icon.svg');
+    background-size: contain;
+    background-repeat: no-repeat;
+}
+.proven-treatment-stage .proven-stages .stage li.check-list span {
+    font-size: 12px;
+    letter-spacing: 0;
+    font-weight: 400;
+}
+.proven-treatment-stage .proven-stages .stage a.btn.secondary-btn {
+    margin-top: 13px;
+    width: 100%;
+}
+@media screen and (max-width: 1024px) {
+    .proven-treatment-stage .proven-stages .stage {
+        margin-bottom: 26px;
+        width: calc(( 100% / 2 ) - 13px);
+    }
+}
+@media screen and (max-width: 768px) {
+    .proven-treatment-stage .proven-stages .stage {
+        width: 100%;
+        margin-right: 0;
+    }
+}
+
+#how-it-works {
+    margin: 126px 0;
+}
+
+#how-it-works .global-title {
+    margin-bottom: 0;
+}
+
+#how-it-works h2 {
+    font-size: 32px;
+    margin-bottom: 37px;
+}
+
+#how-it-works .step-animation .step {
+    display: block;
+    min-height: auto;
+    max-width: 240px;
+    padding: 27px 15px 55px;
+}
+
+#how-it-works .step-animation .step .step-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px;
+}
+
+#how-it-works .step-footer .step-icon {
+    width: 36px;
+    height: 36px;
+}
+
+#how-it-works .step-footer .step-icon img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+#how-it-works .step-footer .step-footer-wrap {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+#how-it-works .step-footer .step-footer-wrap h6,
+#how-it-works .step-footer .step-footer-wrap p {
+    color: #3D7ECE;
+    font-size: 14px;
+    margin: 0;
+}
+
+#how-it-works .step-footer .step-footer-wrap h6 {
+    font-weight: 600;
+}
+
+#how-it-works .step-animation .step h5 {
+    margin-top: 27px;
+    margin-bottom: 16px;
+    font-size: 14px;
+}
+
+#how-it-works .step-animation .step p {
+    font-size: 10px;
+    letter-spacing: 0;
+    line-height: 20px;
+}
+.page-with-components #how-it-works .step-animation .timeline, .page-with-components #how-it-works .step-animation .arrow {
+    display: none;
+}
+
+/* ── HG – Treatments Comparison Grid (.component-hgte) ─────────────────────
+   3-column card grid. Each card: split before/after images + quote + author
+   ─────────────────────────────────────────────────────────────────────────── */
+.component-hgte {
+    padding: 60px 0;
+        background-color: #ffffff;
+    padding: 65px 0;
+    margin: 0 16px;
+    border-radius: 16px;
+    margin-bottom: 50px;
+}
+
+/* Section header: title left, button right */
+.hgte-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 24px;
+    margin-bottom: 40px;
+}
+
+.hgte-header-text h2 {
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 700;
+    color: #0D2445;
+    margin-bottom: 10px;
+    line-height: 1.2;
+}
+
+.hgte-header-text p {
+    font-size: 14px;
+    color: #3D506A;
+    margin-bottom: 0;
+}
+
+.hgte-header-btn {
+    flex-shrink: 0;
+    align-self: flex-start;
+    white-space: nowrap;
+}
+
+/* Grid row gap */
+.hgte-grid {
+    row-gap: 24px;
+}
+
+.hgte-col {
+    display: flex;
+}
+
+/* Card shell */
+.hgte-card {
+    background: #EEF2F6;
+    border-radius: 12px;
+    overflow: hidden;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Before/After image strip */
+.hgte-images {
+    display: flex;
+    width: 100%;
+    border: 3px solid #EEF2F6;
+}
+
+.hgte-img-wrap {
+    position: relative;
+    width: 50%;
+    overflow: hidden;
+}
+
+.hgte-img-wrap img {
+    width: 100%;
+    height: 220px;
+    object-fit: cover;
+    display: block;
+    border: 3px solid #EEF2F6;
+        border-radius: 10px;
+}
+
+/* Pill labels */
+.hgte-label {
+    position: absolute;
+    bottom: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #3D7CD1;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 22px;
+    border-radius: 50px;
+    white-space: nowrap;
+    pointer-events: none;
+}
+
+/* Card body */
+.hgte-body {
+    padding: 20px 20px 24px;
+    text-align: center;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hgte-desc {
+    font-size: 13px;
+    line-height: 1.65;
+    color: #3D506A;
+    margin-bottom: 14px;
+}
+
+.hgte-author {
+    font-size: 14px;
+    font-weight: 700;
+    color: #0D2445;
+    margin-bottom: 0;
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .hgte-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 767px) {
+    .component-hgte {
+        padding: 40px 0;
+    }
+
+    .hgte-grid {
+        row-gap: 16px;
+    }
+
+    .hgte-img-wrap img {
+        height: 180px;
+    }
+}
+
+/* ── Treatment Journey ───────────────────────────────────── */
+.tj-section {
+    border-radius: 16px;
+    margin: 0 16px 50px;
+}
+.tj-header {
+    text-align: center;
+    margin-bottom: 48px;
+    width: 70%;
+    margin: auto;
+    margin-bottom: 70px;
+}
+.tj-header h2 {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+}
+.tj-header .tj-subtitle {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+
+/* ── Before/After slider (left) ───── */
+.tj-ba-wrap {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    aspect-ratio: 430 / 460;
+    border: 2px solid #fff;
+}
+.tj-ba-wrap figure {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.tj-ba-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.tj-ba-img--before {
+    clip-path: inset(0 50% 0 0);
+}
+.tj-ba-divisor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: rgba(255,255,255,0.6);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.tj-ba-handle {
+      position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, .25);
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 255, 255, .6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ew-resize;
+    z-index: 5;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.tj-ba-label {
+    position: absolute;
+    top: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+.tj-ba-label--before {
+    left: 14px;
+    background: rgba(255,255,255,0.85);
+    color: #122B51;
+}
+.tj-ba-label--after {
+    right: 14px;
+    background: #3B82C4;
+    color: #fff;
+}
+.tj-ba-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: ew-resize;
+    margin: 0;
+    -webkit-appearance: none;
+    z-index: 10;
+}
+.tj-ba-meta {
+    margin-top: 14px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    color: rgba(255,255,255,0.75);
+    font-size: 13px;
+}
+.tj-ba-meta strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ── Timeline (right) ─────────────── */
+.tj-timeline {
+    display: flex;
+    flex-direction: column;
+    padding-left: 8px;
+}
+.tj-step {
+    display: flex;
+    gap: 20px;
+    position: relative;
+}
+.tj-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 16px;
+}
+.tj-step-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82C4;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.tj-step-line {
+    flex: 1;
+    width: 2px;
+    border-left: 2px dashed rgba(255,255,255,0.2);
+    margin-top: 6px;
+    min-height: 40px;
+}
+.tj-step-body {
+    flex: 1;
+    padding-bottom: 32px;
+}
+.tj-step-body h5 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    line-height: 1.2;
+}
+.tj-step-body p {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    margin: 0 0 24px;
+    line-height: 1.65;
+}
+.tj-step-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin: 0 0 28px;
+}
+
+/* ── Row layout ───────────── */
+.tj-row {
+    display: flex;
+    gap: 106px;
+    align-items: flex-start;
+}
+.tj-col-left  { flex: 0 0 500px; max-width: 500px; }
+.tj-col-right { flex: 1; }
+
+@media (max-width: 992px) {
+    .tj-col-left  { flex: 0 0 100%; max-width: 100%; }
+    .tj-row       { flex-direction: column; gap: 36px; }
+}
+.text-left{
+    text-align: left;
+}
+.white{
+    color: #ffff;
+}
+.page-with-components .men-pill{
+        right: 40px !important;
+    width: 100%;
+     overflow-x: visible;
+    padding-right: 90px;
+}
+.page-with-components .men-pill img{
+    width: 100%;
+ 
+}
+
+/* ── HG – Treatment Journey (.tj-section) ───────────────────────────────────
+   Before/After slider + timeline steps on dark background
+   ─────────────────────────────────────────────────────────────────────────── */
+.tj-section {
+    border-radius: 16px;
+    margin: 0 16px 50px;
+}
+.tj-header {
+    text-align: center;
+    width: 70%;
+    margin: auto;
+    margin-bottom: 70px;
+}
+.tj-header h2 {
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    margin-bottom: 14px;
+    line-height: 1.3;
+}
+.tj-header .tj-subtitle {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 14px;
+    max-width: 540px;
+    margin: 0 auto;
+    line-height: 1.65;
+}
+
+/* ── Before/After slider (left) ───── */
+.tj-ba-wrap {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+    aspect-ratio: 430 / 460;
+}
+.tj-ba-wrap figure {
+    margin: 0;
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+.tj-ba-img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+.tj-ba-img--before {
+    clip-path: inset(0 50% 0 0);
+}
+.tj-ba-divisor {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 50%;
+    width: 2px;
+    background: rgba(255,255,255,0.6);
+    transform: translateX(-50%);
+    pointer-events: none;
+}
+.tj-ba-handle {
+       position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, .25);
+    backdrop-filter: blur(4px);
+    border: 2px solid rgba(255, 255, 255, .6);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ew-resize;
+    z-index: 5;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.tj-ba-label {
+    position: absolute;
+    top: 16px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    padding: 4px 12px;
+    border-radius: 6px;
+}
+.tj-ba-label--before {
+     left: 14px;
+    color: #122B51;
+    background: #FFFFFFB2;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    border-radius: 10px;
+    padding: 12px 30px;
+}
+.tj-ba-label--after {
+       right: 14px;
+    color: #3D7CD1;
+    background: #FFFFFFB2;
+    backdrop-filter: blur(4px);
+    opacity: 1;
+    border-radius: 10px;
+    padding: 12px 30px;
+}
+.tj-ba-range {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    cursor: ew-resize;
+    margin: 0;
+    -webkit-appearance: none;
+    z-index: 10;
+}
+.tj-ba-meta {
+    margin-top: 14px;
+    display: flex;
+    gap: 24px;
+    justify-content: center;
+    color: rgba(255,255,255,0.75);
+    font-size: 13px;
+}
+.tj-ba-meta strong {
+    color: #fff;
+    font-weight: 700;
+}
+
+/* ── Timeline (right) ─────────────── */
+.tj-timeline {
+    display: flex;
+    flex-direction: column;
+    padding-left: 8px;
+}
+.tj-step {
+    display: flex;
+    gap: 20px;
+    position: relative;
+}
+.tj-step-indicator {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+    width: 16px;
+}
+.tj-step-dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #3B82C4;
+    flex-shrink: 0;
+    margin-top: 4px;
+}
+.tj-step-line {
+    flex: 1;
+    width: 2px;
+    border-left: 2px dashed rgba(255,255,255,0.2);
+    margin-top: 6px;
+    min-height: 40px;
+}
+.tj-step-body {
+    flex: 1;
+    padding-bottom: 32px;
+}
+.tj-step-body h5 {
+    color: #fff;
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 10px;
+    line-height: 1.2;
+}
+.tj-step-body p {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    margin: 0 0 24px;
+    line-height: 1.65;
+}
+.tj-step-divider {
+    border: none;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    margin: 0 0 28px;
+}
+
+/* ── Row layout ───────────── */
+/* .tj-col-left  { flex: 0 0 430px; max-width: 430px; }
+.tj-col-right { flex: 1; } */
+
+@media (max-width: 992px) {
+    .tj-col-left  { flex: 0 0 100%; max-width: 100%; }
+    .tj-row       { flex-direction: column; gap: 36px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HP Journey – "The Journey to Fuller, Healthier Hair"
+   Layout name: hp_journey
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Section wrapper */
+.hp-journey-section {
+    overflow: hidden;
+    position: relative;
+    background-size: contain!important;
+}
+
+/* Background image overlay */
+.hp-journey__overlay {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+}
+.hp-journey-section > .container {
+    position: relative;
+    z-index: 1;
+}
+
+/* Top pill / product image */
+.hp-journey__top-image {
+    margin-bottom: 24px;
+}
+.hp-journey__pill-img {
+    max-height: 160px;
+    width: auto;
+    object-fit: contain;
+    display: inline-block;
+    filter: drop-shadow(0 8px 24px rgba(0,0,0,0.10));
+}
+
+/* Section heading */
+.hp-journey__heading {
+    margin-bottom: 52px;
+}
+.hp-journey__heading h2 {
+    font-size: clamp(22px, 3.5vw, 36px);
+    font-weight: 700;
+    color: #0D2445;
+}
+
+/* Steps row */
+.hp-journey__steps {
+    position: relative;
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 0 0;
+}
+
+/* Dashed horizontal connector spanning the icon centres */
+.hp-journey__connector {
+    position: absolute;
+    top: 44px; /* vertically centred on the 88px icon circle */
+    left: calc(50% / var(--hpj-steps, 3) + 44px);
+    right: calc(50% / var(--hpj-steps, 3) + 44px);
+    height: 0;
+    border-top: 2px dashed #3E7BD2;
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* Individual step */
+.hp-journey__step {
+    flex: 1 1 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 0 16px;
+    position: relative;
+    z-index: 1;
+}
+
+/* Circular icon wrapper */
+.hp-journey__icon-wrap {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 2px solid #3E7BD2;
+    background: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 1;
+}
+.hp-journey__icon-img {
+    width: 44px;
+    height: 44px;
+    object-fit: contain;
+}
+.hp-journey__icon-fallback {
+    font-size: 22px;
+    font-weight: 700;
+    color: #3E7BD2;
+}
+
+/* Step text */
+.hp-journey__step-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #0D2445;
+    margin: 0 0 10px;
+    line-height: 1.3;
+}
+.hp-journey__step-desc {
+    font-size: 14px;
+    color: #3D506A;
+    line-height: 1.65;
+    margin: 0;
+}
+
+/* CTA button */
+.hp-journey__cta {
+    margin-top: 48px;
+}
+
+/* ── Responsive ─────────────────────────────────── */
+@media (max-width: 768px) {
+    .hp-journey__steps {
+        flex-direction: column;
+        align-items: center;
+        gap: 36px 0;
+    }
+    .hp-journey__connector {
+        display: none; /* hide horizontal line on mobile */
+    }
+    .hp-journey__step {
+        max-width: 320px;
+        width: 100%;
+    }
+}
+
+#gummie2 h2{
+        font-size: 32px;
+    line-height: 32px;
+}
+
+.itb-title {
+        font-size: 32px;
+    line-height: 32px;
+
+}
+
+.page-with-components .component-image-text-block .itb-img-wrap img {
+    padding-right: 0px;
+    right: 0;
+    re: absolute;
+    position: relative;
+    height: 100%;
+    width: 100%;
+    object-fit: cover;
+    object-position: left;
+}
+.top-20 img{
+    top:20%!important;
+}
