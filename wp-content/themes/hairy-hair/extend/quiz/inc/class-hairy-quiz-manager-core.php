@@ -74,10 +74,10 @@ class Hairy_Quiz_Manager_Core {
      * Creates custom database tables if they don't exist.
      * This method is called upon theme setup (or similar custom activation point).
      */
-    // public static function activate() {
-    //     $instance = self::get_instance();
-    //     $instance->_create_tables(); // Call the non-static method
-    // }
+    public static function activate() {
+        $instance = self::get_instance();
+        $instance->create_tables();
+    }
 
     /**
      * Internal method to create database tables.
@@ -114,7 +114,7 @@ class Hairy_Quiz_Manager_Core {
         $sql[] = "CREATE TABLE {$this->table_quiz_results} (
             ID BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
             user_id BIGINT(20) UNSIGNED NULL DEFAULT NULL,
-            email VARCHAR(255) UNSIGNED NULL DEFAULT NULL,
+            email VARCHAR(255) NULL DEFAULT NULL,
             first_name VARCHAR(255) NOT NULL,
             last_name VARCHAR(255) NOT NULL,
             phone VARCHAR(50) NOT NULL,
@@ -128,33 +128,8 @@ class Hairy_Quiz_Manager_Core {
             KEY user_id (user_id)
         ) $charset_collate;";
 
-        $sql[] = "CREATE TABLE {$this->table_lead_results} (
-            ID BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-            user_id BIGINT(20) UNSIGNED NOT NULL DEFAULT 0,
-            first_name VARCHAR(255) NOT NULL DEFAULT '',
-            last_name VARCHAR(255) NOT NULL DEFAULT '',
-            email VARCHAR(255) NOT NULL DEFAULT '',
-            phone VARCHAR(255) NOT NULL DEFAULT '',
-            dob VARCHAR(255) NOT NULL DEFAULT '',
-            gender VARCHAR(255) NOT NULL DEFAULT '',
-            address_line_1 VARCHAR(255) NOT NULL DEFAULT '',
-            address_line_2 VARCHAR(255) NOT NULL DEFAULT '',
-            city VARCHAR(255) NOT NULL DEFAULT '',
-            state VARCHAR(255) NOT NULL DEFAULT '',
-            postcode VARCHAR(255) NOT NULL DEFAULT '',
-            receive_communication VARCHAR(20) NOT NULL DEFAULT '',
-            hair_loss_duration VARCHAR(20) NOT NULL DEFAULT '',
-            expacted_results VARCHAR(20) NOT NULL DEFAULT '',
-            allergies_or_sensitivities VARCHAR(20) NOT NULL DEFAULT '',
-            taking_any_medications VARCHAR(20) NOT NULL DEFAULT '',
-            high_blood_pressure VARCHAR(20) NOT NULL DEFAULT '',
-            quiz_answers LONGTEXT NOT NULL,
-            quiz_results LONGTEXT NOT NULL,
-            recommended_products LONGTEXT NOT NULL,
-            submission_date DATETIME NOT NULL,
-            PRIMARY KEY (ID),
-            KEY user_id (user_id)
-        ) $charset_collate;";
+        // Lead table schema lives in Hairy_Quiz_DB_Migrations so fresh installs and upgrades match.
+        $sql[] = Hairy_Quiz_DB_Migrations::lead_table_sql();
 
         // echo "<pre>"; print_r($sql);exit;
 
@@ -163,7 +138,7 @@ class Hairy_Quiz_Manager_Core {
         }
 
         // Insert sample questions
-        $wpdb->query("INSERT INTO {$this->table_questions} (`ID`, `quiz_type`, `answer_type`, `question_sequence`, `question`, `note`) VALUES
+        $this->wpdb->query("INSERT INTO {$this->table_questions} (`ID`, `quiz_type`, `answer_type`, `question_sequence`, `question`, `note`) VALUES
             (6, 'Hair Treatment', 'options', 1, 'How long have you been experiencing hair loss?', 'Affects severity and type of treatment'),
             (7, 'Hair Treatment', 'options', 2, 'How would you describe your current level of hair loss?', 'Affects treatment intensity and eligibility'),
             (9, 'Hair Treatment', 'options', 3, 'What’s your goal for hair improvement?', 'Used to score treatments by goal'),
@@ -179,7 +154,7 @@ class Hairy_Quiz_Manager_Core {
         ");
 
         // Insert sample answers (only partial shown; add full list as needed)
-        $wpdb->query("INSERT INTO {$this->table_answers} (`ID`, `question_id`, `answer_text`, `answer_label`) VALUES 
+        $this->wpdb->query("INSERT INTO {$this->table_answers} (`ID`, `question_id`, `answer_text`, `answer_label`) VALUES 
             (11, 6, 'Less than 6 months', 'A'),
             (12, 6, '6–12 months', 'B'),
             (13, 6, 'Over 1 year', 'C'),

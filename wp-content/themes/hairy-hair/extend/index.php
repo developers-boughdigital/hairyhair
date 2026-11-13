@@ -16,26 +16,22 @@ function check_quiz_result_access() {
     $user_id = get_current_user_id();
 
     if ( $user_id === 0 ) {
-        if ( isset( $_COOKIE['quiz_user_email'] ) ) {
-            $email = sanitize_email( $_COOKIE['quiz_user_email'] );
-        } elseif ( isset( $_COOKIE['lead_user_email'] ) ) {
-            $email = sanitize_email( $_COOKIE['lead_user_email'] );
-        } else {
-            $email = '';
-        }
+        // Guests: only a quiz they submitted themselves, proven by the server-issued guest-access
+        // token. The old quiz_user_email / lead_user_email cookies are not trusted.
+        $quiz_result = function_exists( 'hh_guest_access_row' ) ? hh_guest_access_row( 'quiz' ) : null;
     } else {
         $user_info = get_userdata( $user_id );
         $email = $user_info ? $user_info->user_email : '';
+
+        $quiz_table = $wpdb->prefix . 'hh_quiz_results';
+
+        $quiz_result = $wpdb->get_row(
+            $wpdb->prepare(
+                "SELECT ID FROM {$quiz_table} WHERE email = %s LIMIT 1",
+                $email
+            )
+        );
     }
-
-    $quiz_table = $wpdb->prefix . 'hh_quiz_results';
-
-    $quiz_result = $wpdb->get_row(
-        $wpdb->prepare(
-            "SELECT * FROM {$quiz_table} WHERE email = %s",
-            $email
-        )
-    );
 
     $acess_to_add_prescriptive_products = ( $quiz_result === null ) ? false : true;
     $_SESSION['acess_to_add_prescriptive_products'] = ( $quiz_result === null ) ? false : true;

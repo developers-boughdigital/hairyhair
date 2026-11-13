@@ -72,13 +72,13 @@
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                 <div class="field-list-all">
                                                     <label for="exampleInputFirstName" class="form-label">First Name</label>
-                                                    <input type="text" name="first_name" class="form-control required alpha" id="exampleInputFirstName" aria-describedby="first_nameHelp" placeholder="Ex. John" value="<?php echo gm_get_user_meta($user_id, 'first_name', true); ?>">
+                                                    <input type="text" name="first_name" class="form-control required alpha" id="exampleInputFirstName" aria-describedby="first_nameHelp" placeholder="Ex. John" value="<?php echo esc_attr( gm_get_user_meta($user_id, 'first_name', true) ); ?>">
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                 <div class="field-list-all">
                                                     <label for="exampleInputLastName" class="form-label">Last Name</label>
-                                                    <input type="text" name="last_name" class="form-control required alpha" id="exampleInputLastName" aria-describedby="last_nameHelp" placeholder="Ex. Doe" value="<?php echo gm_get_user_meta($user_id, 'last_name', true); ?>">
+                                                    <input type="text" name="last_name" class="form-control required alpha" id="exampleInputLastName" aria-describedby="last_nameHelp" placeholder="Ex. Doe" value="<?php echo esc_attr( gm_get_user_meta($user_id, 'last_name', true) ); ?>">
                                                 </div>
                                             </div>
                                         </div>
@@ -90,13 +90,13 @@
                                                     $current_user = wp_get_current_user();
                                                     $user_email = $current_user->user_email;
                                                     ?> 
-                                                    <input type="email" name="email" class="form-control required email" id="exampleInputEmail" aria-describedby="emaillHelp" placeholder="john.doe@example.com" value="<?php echo gm_get_user_meta($user_id, 'email', true) ? gm_get_user_meta($user_id, 'email', true) : $user_email; ?>">
+                                                    <input type="email" name="email" class="form-control required email" id="exampleInputEmail" aria-describedby="emaillHelp" placeholder="john.doe@example.com" value="<?php echo esc_attr( gm_get_user_meta($user_id, 'email', true) ? gm_get_user_meta($user_id, 'email', true) : $user_email ); ?>">
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                 <div class="field-list-all">
                                                     <label for="exampleInputPhone" class="form-label">Phone Number</label>
-                                                    <input type="tel" name="phone" class="form-control required numeric" id="exampleInputPhone" aria-describedby="phonelHelp" placeholder="Ex. 0412345678" minlength="10" maxlength="10" pattern="0[0-9]{9}" inputmode="numeric" value="<?php echo gm_get_user_meta($user_id, 'phone', true); ?>">
+                                                    <input type="tel" name="phone" class="form-control required numeric" id="exampleInputPhone" aria-describedby="phonelHelp" placeholder="Ex. 0412345678" minlength="10" maxlength="10" pattern="0[0-9]{9}" inputmode="numeric" value="<?php echo esc_attr( gm_get_user_meta($user_id, 'phone', true) ); ?>">
                                                 </div>
                                             </div>
                                         </div>
@@ -104,7 +104,7 @@
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
                                                 <div class="field-list-all">
                                                     <label for="exampleInputDOB" class="form-label">DOB</label>
-                                                    <input type="text" name="dob" class="form-control required hairy-datepicker" id="exampleInputDOB" aria-describedby="DOBHelp" placeholder="Ex. 2022-12-01" autocomplete="off" value="<?php echo gm_get_user_meta($user_id, 'dob', true); ?>">
+                                                    <input type="text" name="dob" class="form-control required hairy-datepicker" id="exampleInputDOB" aria-describedby="DOBHelp" placeholder="Ex. 2022-12-01" autocomplete="off" value="<?php echo esc_attr( gm_get_user_meta($user_id, 'dob', true) ); ?>">
                                                 </div>
                                             </div>
                                             <div class="col-lg-6 col-md-6 col-sm-12 col-xs-12">
@@ -121,7 +121,7 @@
                                         <div class="row">
                                             <div class="col-lg-12 col-md-6 col-sm-12 col-xs-12">
                                                 <div class="field-list-all form-check">
-                                                    <input type="radio" class="form-check-input" name="receive_communication"  id="exampleCheck1" checked>
+                                                    <input type="checkbox" class="form-check-input" name="consent_to_contact" id="exampleCheck1" value="1" checked>
                                                     <label class="form-check-label" for="exampleCheck1">By completing this form, you agree to receive communications from HairyHair about our hair loss products and services, including access to our licensed health practitioners. Your information will only be used to provide personalised recommendations. You can unsubscribe at any time.</label>
                                                 </div>
                                             </div>
@@ -188,8 +188,29 @@
                                                         </div>
                                                     </div>
                                                 </div>
+                                                <?php
+                                                // Values must match the Zoho CRM picklists exactly (see Hairy_Quiz_Frontend::lead_picklist_options()).
+                                                $hh_lead_picklists = array(
+                                                    'age_group'         => array( 'What is your age group?', Hairy_Quiz_Frontend::lead_picklist_options( 'age_group' ) ),
+                                                    'current_hair_loss' => array( 'Which of the following best describes your current hair loss?', Hairy_Quiz_Frontend::lead_picklist_options( 'current_hair_loss' ) ),
+                                                );
+                                                foreach ( $hh_lead_picklists as $hh_name => $hh_question ) : ?>
+                                                <div class="hair-loss-question" data-question="<?php echo esc_attr( $hh_name ); ?>">
+                                                    <h5><?php echo esc_html( $hh_question[0] ); ?></h5>
+                                                    <div class="all-checkbox">
+                                                        <?php foreach ( $hh_question[1] as $hh_option ) : ?>
+                                                        <div class="form-group">
+                                                            <label class="checkbox-styled">
+                                                                <input type="radio" name="<?php echo esc_attr( $hh_name ); ?>" value="<?php echo esc_attr( $hh_option ); ?>" data-required="1">
+                                                                <span><?php echo esc_html( $hh_option ); ?></span>
+                                                            </label>
+                                                        </div>
+                                                        <?php endforeach; ?>
+                                                    </div>
+                                                </div>
+                                                <?php endforeach; ?>
                                             </div>
-                                        </div> 
+                                        </div>
                                         <div class="next-btn-form">
                                             <button type="button" class="btn dark-btn prev-step-btn">Back</button>
                                             <button type="button" class="btn secondary-btn next-step-btn next-step-two-button">Next</button>
@@ -197,61 +218,38 @@
                                     </div>
                                 
                                     <div class="step step-3" style="display:none">
-                                        <h3>Hair Details</h3>
+                                        <h3>Medical Details</h3>
                                         <p>These details are required so the doctor can provide the best solution.</p> 
                                         <div class="row">
                                             <div class="col-lg-12 col-md-6 col-sm-12 col-xs-12">
-                                                <div class="hair-loss-question">
-                                                    <h5>Do you have any known allergies or sensitivities to medications or supplements?</h5>
+                                                <?php
+                                                // Values must match the Zoho CRM picklists exactly (see Hairy_Quiz_Frontend::lead_picklist_options()).
+                                                $hh_step3 = array(
+                                                    'allergies_or_sensitivities' => array( 'Do you have any known allergies or sensitivities to medications or supplements?', 'explain_allergies', 'Please explain your allergies or sensitivities.' ),
+                                                    'taking_any_medications'     => array( 'Are you currently taking any other medications or supplements?', 'explain_medications', 'Please list or explain your other medications or supplements.' ),
+                                                    'high_blood_pressure'        => array( 'Do you have a history of high blood pressure (relevant to minoxidil use)?', '', '' ),
+                                                );
+                                                foreach ( $hh_step3 as $hh_name => $hh_q ) : ?>
+                                                <div class="hair-loss-question" data-question="<?php echo esc_attr( $hh_name ); ?>">
+                                                    <h5><?php echo esc_html( $hh_q[0] ); ?></h5>
                                                     <div class="all-checkbox">
+                                                        <?php foreach ( Hairy_Quiz_Frontend::lead_picklist_options( $hh_name ) as $hh_option ) : ?>
                                                         <div class="form-group">
                                                             <label class="checkbox-styled">
-                                                                <input type="radio" name="allergies_or_sensitivities" value="Yes">
-                                                                <span>Yes</span>
+                                                                <input type="radio" name="<?php echo esc_attr( $hh_name ); ?>" value="<?php echo esc_attr( $hh_option ); ?>">
+                                                                <span><?php echo esc_html( $hh_option ); ?></span>
                                                             </label>
                                                         </div>
-                                                        <div class="form-group">
-                                                            <label class="checkbox-styled">
-                                                                <input type="radio" name="allergies_or_sensitivities" value="No">
-                                                                <span>No</span>
-                                                            </label>
-                                                        </div>
+                                                        <?php endforeach; ?>
                                                     </div>
-                                                </div>
-                                                <div class="hair-loss-question">
-                                                    <h5>Are you currently taking any other medications or supplements?</h5>
-                                                    <div class="all-checkbox">
-                                                        <div class="form-group">
-                                                            <label class="checkbox-styled">
-                                                                <input type="radio" name="taking_any_medications" value="Yes">
-                                                                <span>Yes</span>
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label class="checkbox-styled">
-                                                                <input type="radio" name="taking_any_medications" value="No">
-                                                                <span>No</span>
-                                                            </label>
-                                                        </div>
+                                                    <?php if ( $hh_q[1] ) : ?>
+                                                    <div class="mb-3 field-list-all hh-explanation" data-explains="<?php echo esc_attr( $hh_name ); ?>" style="display:none">
+                                                        <label for="<?php echo esc_attr( $hh_q[1] ); ?>" class="form-label"><?php echo esc_html( $hh_q[2] ); ?></label>
+                                                        <textarea name="<?php echo esc_attr( $hh_q[1] ); ?>" id="<?php echo esc_attr( $hh_q[1] ); ?>" class="form-control" rows="4" maxlength="<?php echo (int) Hairy_Quiz_Frontend::EXPLANATION_MAX_CHARS; ?>"></textarea>
                                                     </div>
+                                                    <?php endif; ?>
                                                 </div>
-                                                <div class="hair-loss-question">
-                                                    <h5>Do you have a history with high blood pressure (related to using minoxidyl)?</h5>
-                                                    <div class="all-checkbox">
-                                                        <div class="form-group">
-                                                            <label class="checkbox-styled">
-                                                                <input type="radio" name="high_blood_pressure" value="Yes">
-                                                                <span>Yes</span>
-                                                            </label>
-                                                        </div>
-                                                        <div class="form-group">
-                                                            <label class="checkbox-styled">
-                                                                <input type="radio" name="high_blood_pressure" value="No">
-                                                                <span>No</span>
-                                                            </label>
-                                                        </div>
-                                                    </div>
-                                                </div>
+                                                <?php endforeach; ?>
                                             </div>
                                         </div>
                                     

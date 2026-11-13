@@ -12,9 +12,13 @@ if ( ! defined( 'HAIRY_URL' ) ) {
 }
 
 require_once HAIRY_PATH . 'inc/class-hairy-quiz-manager-core.php';
+require_once HAIRY_PATH . 'inc/class-hairy-quiz-db-migrations.php';
 require_once HAIRY_PATH . 'inc/class-hairy-quiz-admin.php'; 
 require_once HAIRY_PATH . 'inc/class-hairy-leads-admin.php'; 
 require_once HAIRY_PATH . 'inc/class-hairy-quiz-frontend.php';
+require_once HAIRY_PATH . 'inc/guest-access.php';      // Server-issued guest tokens (replace email cookies).
+require_once HAIRY_PATH . 'inc/private-uploads.php';   // Private scalp-photo uploads (replaces the public Media Library handler).
+require_once HAIRY_PATH . 'inc/submission-guard.php';  // Duplicate-submission protection.
 
 
 function hairy_load_quiz_manager() {
@@ -33,6 +37,10 @@ function hairy_quiz_manager_setup() {
     }
 }
 add_action( 'after_setup_theme', 'hairy_quiz_manager_setup', 0 );
+
+// Lead table schema migrations: run on every request once new theme files are uploaded (no reactivation needed),
+// before any AJAX/form handler writes to the table. No-op once the stored version is current.
+add_action( 'after_setup_theme', array( 'Hairy_Quiz_DB_Migrations', 'maybe_migrate' ), 1 );
  
 
  
@@ -60,117 +68,103 @@ function quiz_my_account_menu_items( $items ) {
 add_filter( 'woocommerce_account_menu_items', 'quiz_my_account_menu_items' );
 
 
+// Lead / quiz-result linking lives in the hairyhair-registration mu-plugin (HH_Registration_Lead::link_user):
+// it runs on registration, login and password reset, only for accounts whose email is verified, and only
+// claims rows not owned by anyone. The theme fills empty profile fields once rows have been linked.
 add_action( 'user_register', 'my_custom_user_registration_handler', 10, 1 );
-add_action( 'wp_login', 'my_custom_user_registration_handler', 10, 2 );
-function my_custom_user_registration_handler( $user_id ) {
+add_action( 'wp_login', 'my_custom_user_registration_handler', 10, 0 );
+add_action( 'hh_leads_linked', 'hairy_quiz_fill_profile_from_linked_leads', 10, 2 );
+
+/**
+ * Registration / login: the browser is now an account, so revoke guest access (server-side token
+ * and cookie) and drop the legacy email cookies (no longer trusted for anything).
+ */
+function my_custom_user_registration_handler() {
+    if ( function_exists( 'hh_guest_access_clear' ) ) {
+        hh_guest_access_clear();
+    }
+    foreach ( array( 'quiz_user_email', 'lead_user_email' ) as $cookie ) {
+        if ( isset( $_COOKIE[ $cookie ] ) ) {
+            unset( $_COOKIE[ $cookie ] );
+            if ( ! headers_sent() ) {
+                setcookie( $cookie, '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN );
+            }
+        }
+    }
+}
+
+/**
+ * Copies details from the user's own newest linked lead (then quiz result) into profile fields
+ * that are still empty. Never overwrites an existing value and never writes an empty value.
+ *
+ * @param int    $user_id User ID.
+ * @param string $email   Account email (normalised).
+ */
+function hairy_quiz_fill_profile_from_linked_leads( $user_id, $email ) {
     global $wpdb;
-    $user_info = get_userdata( $user_id );
-    $email = $user_info->user_email;
-
-    $quiz_table = $wpdb->prefix . 'hh_quiz_results';
-    $lead_table = $wpdb->prefix . 'hh_lead_results';
-
-    $quiz = $wpdb->get_row("SELECT * FROM $quiz_table WHERE email = '$email' ");
-
-    if($quiz) {
-        $wpdb->query("UPDATE $quiz_table SET user_id = $user_id WHERE email = '$quiz->email'");
-
-        update_user_meta($user_id, 'email', $email);
-        update_user_meta($user_id, 'first_name', $quiz->first_name);
-        update_user_meta($user_id, 'last_name', $quiz->last_name);
-        update_user_meta($user_id, 'phone', $quiz->phone);
-        update_user_meta($user_id, 'dob', $quiz->dob);
-        update_user_meta($user_id, 'gender', $quiz->gender);
-    } 
-
-    $lead = $wpdb->get_row("SELECT * FROM $lead_table WHERE email = '$email' ");
-
-    if($lead) {
-        $wpdb->query("UPDATE $lead_table SET user_id = $user_id WHERE email = '$email'");
-
-        update_user_meta($user_id, 'first_name', $lead->first_name);
-        update_user_meta($user_id, 'email', $email);
-        update_user_meta($user_id, 'last_name', $lead->last_name);
-        update_user_meta($user_id, 'phone', $lead->phone);
-        update_user_meta($user_id, 'dob', $lead->dob);
-        update_user_meta($user_id, 'gender', $lead->gender);
-        update_user_meta($user_id, 'postcode', $lead->postcode);
-        update_user_meta($user_id, 'email', $lead->email);
-        update_user_meta($user_id, 'state', $lead->state);
-        update_user_meta($user_id, 'city', $lead->city);
-        update_user_meta($user_id, 'address_line_1', $lead->address_line_1);
-        update_user_meta($user_id, 'address_line_2', $lead->address_line_2);
+    $user_id = absint( $user_id );
+    if ( ! $user_id || '' === (string) $email ) {
+        return;
     }
 
-     
+    $lead = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}hh_lead_results WHERE user_id = %d AND email = %s ORDER BY ID DESC LIMIT 1",
+        $user_id, $email
+    ), ARRAY_A );
+    $quiz = $wpdb->get_row( $wpdb->prepare(
+        "SELECT * FROM {$wpdb->prefix}hh_quiz_results WHERE user_id = %d AND email = %s ORDER BY ID DESC LIMIT 1",
+        $user_id, $email
+    ), ARRAY_A );
 
-    if (isset($_COOKIE['quiz_user_email'])) {
-        unset($_COOKIE['quiz_user_email']);
-        setcookie('quiz_user_email', '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN);
+    $fields = array( 'first_name', 'last_name', 'phone', 'dob', 'gender', 'postcode', 'state', 'city', 'address_line_1', 'address_line_2' );
+    $values = array( 'email' => $email );
+    foreach ( $fields as $field ) {
+        foreach ( array( $lead, $quiz ) as $row ) {
+            if ( is_array( $row ) && isset( $row[ $field ] ) && '' !== trim( (string) $row[ $field ] ) ) {
+                $values[ $field ] = $row[ $field ];
+                break;
+            }
+        }
     }
 
-    if (isset($_COOKIE['lead_user_email'])) {
-        unset($_COOKIE['lead_user_email']);
-        setcookie('lead_user_email', '', time() - 3600, COOKIEPATH, COOKIE_DOMAIN);
+    foreach ( $values as $key => $value ) {
+        if ( '' === trim( (string) get_user_meta( $user_id, $key, true ) ) ) {
+            update_user_meta( $user_id, $key, $value );
+        }
     }
-
 }
  
 
+/**
+ * Columns gm_get_user_meta() may read from the lead table (column names cannot be prepared).
+ *
+ * @return string[]
+ */
+function gm_get_user_meta_allowed_keys() {
+    return array( 'first_name', 'last_name', 'email', 'phone', 'dob', 'gender', 'address_line_1', 'address_line_2', 'city', 'state', 'postcode' );
+}
+
 function gm_get_user_meta($user_id, $key = '', $single = false) {
-    global $wpdb; 
-    
     if (isset($user_id) && $user_id > 0) { 
         return get_user_meta($user_id, $key, $single);
     } 
-     
-    if (isset($_COOKIE['lead_user_email'])) { 
-        $email = $_COOKIE['lead_user_email']; 
-        $table = $wpdb->prefix . 'hh_lead_results';
- 
-        return $wpdb->get_var("SELECT $key FROM {$table} WHERE email = '$email'");
 
-    } elseif (isset($_COOKIE['quiz_user_email'])) {
-        $n_Arr = [
-            'address_line_1',
-            'address_line_2',
-            'city',
-            'state',
-            'postcode',
-        ];
-
-        if(!in_array($key, $n_Arr)) {
-            $email = $_COOKIE['quiz_user_email']; 
-            $table = $wpdb->prefix . 'hh_quiz_results';
-            return $wpdb->get_var("SELECT $key FROM {$table} WHERE email = '$email'");
+    // Guests: only their own lead / quiz row, authorised by the server-issued guest-access token
+    // (never by an email address in a cookie). Lead row first, then quiz row, as before.
+    if ( ! function_exists( 'hh_guest_access_row' ) || ! in_array( $key, gm_get_user_meta_allowed_keys(), true ) ) {
+        return '';
+    }
+    $address_keys = array( 'address_line_1', 'address_line_2', 'city', 'state', 'postcode' );
+    foreach ( array( 'lead', 'quiz' ) as $purpose ) {
+        if ( 'quiz' === $purpose && in_array( $key, $address_keys, true ) ) {
+            continue;
         }
-
-    }   
-
-}
-
-
-add_action('wp_ajax_upload_custom_file', 'upload_custom_file_handler');
-add_action('wp_ajax_nopriv_upload_custom_file', 'upload_custom_file_handler');
-
-function upload_custom_file_handler() { 
-    if (empty($_FILES['file'])) {
-        wp_send_json_error('No file uploaded');
+        $row = hh_guest_access_row( $purpose );
+        if ( $row && isset( $row[ $key ] ) ) {
+            return $row[ $key ];
+        }
     }
- 
-    require_once(ABSPATH . 'wp-admin/includes/file.php');
-    require_once(ABSPATH . 'wp-admin/includes/media.php');
-    require_once(ABSPATH . 'wp-admin/includes/image.php');
- 
-    $uploaded = media_handle_upload('file', 0); 
-
-    if (is_wp_error($uploaded)) {
-        wp_send_json_error($uploaded->get_error_message());
-    }
- 
-    $file_url = wp_get_attachment_url($uploaded);
-
-    wp_send_json_success(['attachment_id' => $uploaded, 'url' => $file_url]);
+    return '';
 }
 
 
@@ -184,7 +178,8 @@ function enqueue_custom_file_upload_script() {
 
     // Localize the admin-ajax URL
     wp_localize_script('custom-upload-script', 'ajax_object', array(
-        'ajax_url' => admin_url('admin-ajax.php')
+        'ajax_url'     => admin_url('admin-ajax.php'),
+        'upload_nonce' => is_user_logged_in() ? wp_create_nonce( 'hh_upload' ) : '', // private-uploads.php requires it for logged-in users
     ));
 
     // Add inline JS code
@@ -196,6 +191,7 @@ function enqueue_custom_file_upload_script() {
                 var formData = new FormData();
                 formData.append('file', file);
                 formData.append('action', 'upload_custom_file');
+                formData.append('nonce', ajax_object.upload_nonce);
 
                 $.ajax({
                     url: ajax_object.ajax_url,

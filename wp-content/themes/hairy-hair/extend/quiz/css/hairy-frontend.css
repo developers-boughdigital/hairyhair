@@ -106,3 +106,13 @@
     background-color: #007bff;
     box-shadow: 0 0 0 2px #e5f2ff;
 }
+
+/* Unanswered required question in the lead form (age group, current hair loss) */
+.hair-loss-question.error h5 { color: #dc3545; }
+
+/* Lead form consent: an optional checkbox that keeps the original round "radio" look
+   (same values as the theme's .form-check-input[type="radio"] rules). */
+#hairy-frontend-get-started-form #exampleCheck1 { border-radius: 50%; }
+#hairy-frontend-get-started-form #exampleCheck1:checked {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='2' fill='%23fff'/%3e%3c/svg%3e");
+}

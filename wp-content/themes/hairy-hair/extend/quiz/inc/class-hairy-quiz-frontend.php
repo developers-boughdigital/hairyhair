@@ -6,6 +6,56 @@ if ( ! defined( 'ABSPATH' ) ) {
 
 class Hairy_Quiz_Frontend {
 
+    /**
+     * Allowed values for the lead-form Step 2 / Step 3 picklists (2026-11-12 implementation,
+     * values checked against the Zoho CRM Lead layout). Sent to Zoho unchanged, so they must match
+     * the Zoho picklist values exactly (capitalisation and spacing).
+     *
+     * @param string $field Form field name.
+     * @return string[]
+     */
+    public static function lead_picklist_options( $field ) {
+        $options = array(
+            'age_group'                  => array( 'Under 25', '25 - 34', '35 - 44', '45 - 54', '55+' ),
+            'current_hair_loss'          => array( 'Mild thinning', 'Noticeable Patches', 'Significant loss', 'Nearly bald' ),
+            'allergies_or_sensitivities' => array( 'Yes', 'No' ),
+            'taking_any_medications'     => array( 'Yes', 'No' ),
+            'high_blood_pressure'        => array( 'Yes', 'No', 'Unsure' ),
+        );
+        return isset( $options[ $field ] ) ? $options[ $field ] : array();
+    }
+
+    /**
+     * Max characters for a Step 3 explanation.
+     */
+    const EXPLANATION_MAX_CHARS = 2000;
+
+    /**
+     * Cleans a free-text medical explanation without losing content.
+     *
+     * Kept as plain text (no tag stripping, so entries like "<5mg daily" survive); it is always
+     * escaped on output. Line breaks are normalised and control characters removed.
+     *
+     * @param mixed $raw Submitted value.
+     * @return string|WP_Error Clean text ('' if empty) or an error for invalid input.
+     */
+    public static function clean_explanation( $raw ) {
+        if ( ! is_string( $raw ) ) {
+            return new WP_Error( 'invalid', __( 'Please enter your explanation as text.', 'hairy-hair' ) );
+        }
+        $text = wp_unslash( $raw );
+        if ( '' !== $text && '' === wp_check_invalid_utf8( $text ) ) {
+            return new WP_Error( 'invalid', __( 'Your explanation contains characters we cannot accept. Please retype it.', 'hairy-hair' ) );
+        }
+        $text = str_replace( array( "\r\n", "\r" ), "\n", $text );
+        $text = preg_replace( '/[^\P{C}\n\t]/u', '', $text ); // drop control/invisible format chars, keep newlines and tabs
+        $text = trim( (string) $text );
+        if ( mb_strlen( $text ) > self::EXPLANATION_MAX_CHARS ) {
+            return new WP_Error( 'too_long', sprintf( __( 'Please keep each explanation under %d characters.', 'hairy-hair' ), self::EXPLANATION_MAX_CHARS ) );
+        }
+        return $text;
+    }
+
     protected $core_manager;
 
     protected $wpdb;
@@ -27,8 +77,8 @@ class Hairy_Quiz_Frontend {
 
 
     public function enqueue_frontend_scripts() {
-        wp_enqueue_style( 'hairy-frontend-css', HAIRY_URL . 'css/hairy-frontend.css', array(), '1.0.2' );
-        wp_enqueue_script( 'hairy-frontend-js', HAIRY_URL . 'js/hairy-frontend.js', array( 'jquery', 'jquery-ui-datepicker' ), '1.0.2', true );
+        wp_enqueue_style( 'hairy-frontend-css', HAIRY_URL . 'css/hairy-frontend.css', array(), '1.0.4' );
+        wp_enqueue_script( 'hairy-frontend-js', HAIRY_URL . 'js/hairy-frontend.js', array( 'jquery', 'jquery-ui-datepicker' ), '1.0.4', true );
         wp_enqueue_style( 'jquery-ui-css', '//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css' ); // For datepicker
 
         wp_localize_script( 'hairy-frontend-js', 'hairyQuiz', array(
@@ -91,6 +141,7 @@ class Hairy_Quiz_Frontend {
                             <div class="sign-up-content-form" id="multi-step-form">
                                 <form id="hairy-frontend-quiz-form" data-quiz-type="<?php echo esc_attr( $quiz_type ); ?>" enctype="multipart/form-data">
                                 <input type="hidden" name="action" value="hairy_submit_quiz">
+                                <input type="hidden" name="hh_submission_token" value="">
                                 <?php wp_nonce_field( 'hairy_quiz_frontend_nonce', 'hairy_quiz_frontend_nonce' ); ?> 
 
                                 <?php $count = 1; ?>
@@ -410,14 +461,23 @@ class Hairy_Quiz_Frontend {
             }
         } 
 
-        if(isset($_POST['input_file']) && !empty($_POST['input_file'])) {
-            $input_file = $_POST['input_file']; 
+        // Only a photo this visitor uploaded (private-uploads owner check) is kept; anything else is dropped.
+        $input_file = '';
+        if ( isset( $_POST['input_file'] ) && '' !== trim( (string) $_POST['input_file'] ) && function_exists( 'hh_upload_claim' ) ) {
+            $input_file = hh_upload_claim( wp_unslash( $_POST['input_file'] ) );
+        }
+        if ( '' !== $input_file ) {
             $next_index = count($quiz_results_data);
             $quiz_results_data[$next_index] = [
                 ['id' => 'File'],
                 ['answer' => $input_file]
             ];
         }
+
+        // Stored answers: the submitted form without the nonce/idempotency token, with the verified photo reference.
+        $posted = wp_unslash( $_POST );
+        unset( $posted['hairy_quiz_frontend_nonce'], $posted[ Hairy_Submission_Guard::TOKEN_FIELD ] );
+        $posted['input_file'] = $input_file;
 
         $data = array(
             'email'                => $email,
@@ -426,12 +486,36 @@ class Hairy_Quiz_Frontend {
             'phone'                => $phone,
             'dob'                  => $dob,
             'gender'               => $gender,
-            'quiz_answers'         => wp_json_encode( $_POST ),
+            'quiz_answers'         => wp_json_encode( $posted ),
             'quiz_results'         => wp_json_encode( $quiz_results_data ),
             'recommended_products' => wp_json_encode( $recommended_products_ids ),
-            'submission_date'      => current_time( 'mysql' ),
-        ); 
- 
+        );
+
+        $fingerprint = $posted;
+        unset( $fingerprint['action'] );
+        $guard = Hairy_Submission_Guard::begin( 'quiz', $email, $fingerprint );
+        if ( is_wp_error( $guard ) ) {
+            wp_send_json_error( array( 'message' => __( 'We could not save your answers just now. Please try again in a moment.', 'hairy-hair' ) ) );
+        }
+        if ( isset( $guard['duplicate'] ) ) {
+            wp_send_json_success( array( 'message' => $guard['duplicate']['message'], 'duplicate' => true ) );
+        }
+        $guard = $guard['guard'];
+
+        // Every submission is a new history row (earlier questionnaires are never overwritten).
+        $row = array_merge( $data, array( 'submission_date' => current_time( 'mysql' ) ) );
+        if ( $user_id ) {
+            $row['user_id'] = (int) $user_id;
+        }
+        $inserted = $this->wpdb->insert( $this->core_manager->get_table_quiz_results(), $row );
+        if ( ! $inserted ) {
+            Hairy_Submission_Guard::release( $guard );
+            wp_send_json_error( array( 'message' => 'Failed to insert record.' ) );
+        }
+        $quiz_id = (int) $this->wpdb->insert_id;
+        $message = 'Quiz result added. Redirecting...';
+        Hairy_Submission_Guard::complete( $guard, $quiz_id, $message );
+
         if ($user_id) {
             update_user_meta($user_id, 'email', $email);
             update_user_meta($user_id, 'first_name', $first_name);
@@ -439,65 +523,11 @@ class Hairy_Quiz_Frontend {
             update_user_meta($user_id, 'phone', $phone);
             update_user_meta($user_id, 'dob', $dob);
             update_user_meta($user_id, 'gender', $gender);
-        } else {
-            $cookie_name  = 'quiz_user_email';
-            $cookie_value = $user_id ? $user_id : $email;
-            $cookie_time  = time() + ( 30 * DAY_IN_SECONDS );
-
-            setcookie( $cookie_name, $cookie_value, $cookie_time, COOKIEPATH, COOKIE_DOMAIN );
-            $_COOKIE[ $cookie_name ] = $cookie_value;
- 
-        }
-        $existing = $this->wpdb->get_var(
-            $this->wpdb->prepare(
-                "SELECT COUNT(*) FROM {$this->core_manager->get_table_quiz_results()} WHERE user_id = %d",
-                $user_id
-            )
-        ); 
-
-        $where_column = $user_id ? 'user_id' : 'email';
-        $where_value  = $user_id ? $user_id : $email;
-        $where_format = $user_id ? '%d' : '%s';
-        $formats = array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s' );
-
-        if ( $existing ) { 
-
-            $updated = $this->wpdb->update(
-                $this->core_manager->get_table_quiz_results(),
-                $data,
-                array( $where_column => $where_value ),
-                $formats,
-                array( $where_format )
-            );
-
-            if ( $updated !== false ) {
-                wp_send_json_success( array(
-                    'message' => 'Quiz result updated. Redirecting...'
-                ));
-            } else {
-                wp_send_json_error( array( 'message' => 'Failed to update record.' ) );
-            }
-
-        } else {
-  
-            $inserted = $this->wpdb->insert(
-                $this->core_manager->get_table_quiz_results(),
-                array_merge( [ $where_column => $where_value ], $data ),
-                array_merge( [ $where_format ], $formats )
-            );
-
-            
-            // wp_send_json_error( array( 'message' => $wpdb->last_error ) );
-            if ( $inserted ) {
-                wp_send_json_success( array(
-                    'message' => 'Quiz result added. Redirecting...'
-                ));
-            } else {
-                wp_send_json_error( array( 'message' => 'Failed to insert record.' ) );
-            }
-             
+        } elseif ( function_exists( 'hh_guest_access_grant' ) ) {
+            hh_guest_access_grant( $email, 'quiz', $quiz_id ); // Replaces the old quiz_user_email cookie.
         }
 
+        wp_send_json_success( array( 'message' => $message ) );
     }
 
     public function handle_lead_submission() { 
@@ -506,19 +536,56 @@ class Hairy_Quiz_Frontend {
         $user_id        = get_current_user_id(); 
         $first_name     = isset( $_POST['first_name'] ) ? sanitize_text_field( $_POST['first_name'] ) : '';
         $last_name      = isset( $_POST['last_name'] ) ? sanitize_text_field( $_POST['last_name'] ) : '';
-        $email          = isset( $_POST['email'] ) ? sanitize_text_field( $_POST['email'] ) : '';
+        $email          = isset( $_POST['email'] ) ? strtolower( trim( sanitize_email( wp_unslash( $_POST['email'] ) ) ) ) : '';
         $phone          = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
         $dob            = isset( $_POST['dob'] ) ? sanitize_text_field( $_POST['dob'] ) : '';
         $gender         = isset( $_POST['gender'] ) ? sanitize_text_field( $_POST['gender'] ) : '';
-        $receive_communication      = isset( $_POST['receive_communication'] ) ? sanitize_text_field( $_POST['receive_communication'] ) : '';
+        // Consent is true only when the checkbox (value "1") was actually ticked; absent or anything
+        // else (including the old receive_communication radio's "on") is false. Optional.
+        $consent_to_contact         = isset( $_POST['consent_to_contact'] ) && '1' === $_POST['consent_to_contact'];
         $hair_loss_duration         = isset( $_POST['hair-loss-duration'] ) ? sanitize_text_field( $_POST['hair-loss-duration'] ) : '';
         $expacted_results           = isset( $_POST['expacted_results'] ) ? sanitize_text_field( $_POST['expacted_results'] ) : '';
-        $allergies_or_sensitivities = isset( $_POST['allergies_or_sensitivities'] ) ? sanitize_text_field( $_POST['allergies_or_sensitivities'] ) : '';
-        $taking_any_medications     = isset( $_POST['taking_any_medications'] ) ? sanitize_text_field( $_POST['taking_any_medications'] ) : '';
-        $high_blood_pressure        = isset( $_POST['high_blood_pressure'] ) ? sanitize_text_field( $_POST['high_blood_pressure'] ) : ''; 
-         
-        if ( empty( $first_name ) || empty( $last_name ) || empty( $email )  || empty( $phone ) || empty( $dob ) || empty( $gender ) || empty( $receive_communication ) || empty( $hair_loss_duration ) || empty( $expacted_results ) || empty( $allergies_or_sensitivities ) || empty( $taking_any_medications ) || empty( $high_blood_pressure )) {
+        // Step 2 and Step 3 picklists: compared unmodified (no trimming/case changes) against the exact allowed values.
+        $picklist = function ( $name ) {
+            return isset( $_POST[ $name ] ) && is_string( $_POST[ $name ] ) ? wp_unslash( $_POST[ $name ] ) : '';
+        };
+        $age_group                  = $picklist( 'age_group' );
+        $current_hair_loss          = $picklist( 'current_hair_loss' );
+        $allergies_or_sensitivities = $picklist( 'allergies_or_sensitivities' );
+        $taking_any_medications     = $picklist( 'taking_any_medications' );
+        $high_blood_pressure        = $picklist( 'high_blood_pressure' );
+
+        if ( empty( $first_name ) || empty( $last_name ) || empty( $email )  || empty( $phone ) || empty( $dob ) || empty( $gender ) || empty( $hair_loss_duration ) || empty( $expacted_results ) || '' === $age_group || '' === $current_hair_loss || '' === $allergies_or_sensitivities || '' === $taking_any_medications || '' === $high_blood_pressure ) {
             wp_send_json_error( array( 'message' => __( 'Please fill all required fields.', 'hairy-hair' ) ) );
+        }
+
+        foreach ( array( 'age_group', 'current_hair_loss', 'allergies_or_sensitivities', 'taking_any_medications', 'high_blood_pressure' ) as $field ) {
+            if ( ! in_array( $$field, self::lead_picklist_options( $field ), true ) ) {
+                wp_send_json_error( array( 'message' => __( 'Please choose one of the listed options for each question.', 'hairy-hair' ) ) );
+            }
+        }
+
+        // Step 3 explanations: required when the answer is "Yes", not stored (NULL) when "No".
+        $explanations = array();
+        foreach ( array( 'explain_allergies' => $allergies_or_sensitivities, 'explain_medications' => $taking_any_medications ) as $field => $answer ) {
+            $explanations[ $field ] = null;
+            if ( 'Yes' !== $answer ) {
+                continue;
+            }
+            $text = self::clean_explanation( isset( $_POST[ $field ] ) ? $_POST[ $field ] : '' );
+            if ( is_wp_error( $text ) ) {
+                wp_send_json_error( array( 'message' => $text->get_error_message() ) );
+            }
+            if ( '' === $text ) {
+                wp_send_json_error( array( 'message' => 'explain_allergies' === $field
+                    ? __( 'Please explain your allergies or sensitivities.', 'hairy-hair' )
+                    : __( 'Please list or explain your other medications or supplements.', 'hairy-hair' ) ) );
+            }
+            $explanations[ $field ] = $text;
+        }
+
+        if ( ! is_email( $email ) ) {
+            wp_send_json_error( array( 'message' => __( 'Please enter a valid email address.', 'hairy-hair' ) ) );
         }
 
         $phone_digits = preg_replace( '/\D/', '', $phone );
@@ -534,31 +601,7 @@ class Hairy_Quiz_Frontend {
             wp_send_json_error( array( 'message' => __( 'Please enter a valid Date of Birth in DD-MM-YYYY format.', 'hairy-hair' ) ) );
         }
 
-        global $wpdb;
-        $table = $this->core_manager->get_table_leads_results();       
-        /*$existing = $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM $table WHERE user_id = %d",$user_id
-        ));*/
-
-       /* $existing = $wpdb->get_var( $wpdb->prepare(
-            "SELECT id FROM $table WHERE email = %d",$email
-        ));*/
-
-        if ( $user_id) {
-            update_user_meta($user_id, 'first_name', $first_name);
-            update_user_meta($user_id, 'last_name', $last_name);
-            update_user_meta($user_id, 'phone', $phone);
-            update_user_meta($user_id, 'dob', $dob);
-            update_user_meta($user_id, 'gender', $gender);
-            update_user_meta($user_id, 'email', $email);
-        } else {
-            $cookie_name  = 'lead_user_email';
-            $cookie_value = $user_id ? $user_id : $email;
-            $cookie_time  = time() + ( 30 * DAY_IN_SECONDS );
-
-            setcookie( $cookie_name, $cookie_value, $cookie_time, COOKIEPATH, COOKIE_DOMAIN );
-            $_COOKIE[ $cookie_name ] = $cookie_value;
-        }
+        $table = $this->core_manager->get_table_leads_results();
 
         $data = array(
             'first_name'                 => $first_name,
@@ -567,90 +610,187 @@ class Hairy_Quiz_Frontend {
             'phone'                      => $phone,
             'dob'                        => $dob,
             'gender'                     => $gender,
-            'receive_communication'      => $receive_communication,
+            'receive_communication'      => $consent_to_contact ? 'yes' : 'no', // legacy column, kept readable in wp-admin
             'hair_loss_duration'         => $hair_loss_duration,
             'expacted_results'           => $expacted_results,
             'allergies_or_sensitivities' => $allergies_or_sensitivities,
             'taking_any_medications'     => $taking_any_medications,
             'high_blood_pressure'        => $high_blood_pressure,
-            'submission_date'            => current_time( 'mysql' ),
-        );      
-        $formats = array(
-            '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s',
-            '%s', '%s', '%s', '%s', '%s'
-        );
-        $zoho_data = [
-            'First_Name'                                        => $first_name,                 
-            'Last_Name'                                         => $last_name,                 
-            'Email'                                             => $email,                 
-            'Phone'                                             => $phone,
-            'Date_Of_Birth'                                     => date( "Y-m-d", strtotime($dob) ) , //'1990-04-11',
-            'Gender'                                            => $gender,
-            'How_long_have_you_been_experiencing_hair_loss'     => $hair_loss_duration,
-            'What_results_are_you_hoping_to_achieve'            => $expacted_results,
-            'Explain_Other_Medications_or_Supplements'          => $allergies_or_sensitivities,
-            'Are_you_currently_taking_any_other_medications'    => $taking_any_medications,
-            'Do_you_have_a_history_with_high_blood_pressure'    => $high_blood_pressure,
-            'Lead_Source'                                       => 'Website - Quiz Questionnaire',
-            'Website'                                           => get_site_url().'/lets-get-started',
-        ];
-        // Insert into local DB (always, regardless of Zoho)
-        $db_where_column = $user_id ? 'user_id' : 'email';
-        $db_where_value  = $user_id ? $user_id   : $email;
-        $db_where_format = $user_id ? '%d'        : '%s';
-
-        $inserted = $this->wpdb->insert(
-            $table,
-            array_merge( [ $db_where_column => $db_where_value ], $data ),
-            array_merge( [ $db_where_format ], $formats )
+            // Step 2 / Step 3 fields (schema v4).
+            'consent_to_contact'         => $consent_to_contact ? 1 : 0,
+            'age_group'                  => $age_group,
+            'current_hair_loss'          => $current_hair_loss,
+            'explain_allergies'          => $explanations['explain_allergies'],
+            'explain_medications'        => $explanations['explain_medications'],
         );
 
-        if ( ! $inserted ) {
-            wp_send_json_error( array( 'message' => 'Failed to insert record.' ) );
-            exit;
+        // Duplicate-request protection (same token or identical payload within 2 min), under a per-email lock.
+        $guard = Hairy_Submission_Guard::begin( 'lead', $email, $data );
+        if ( is_wp_error( $guard ) ) {
+            wp_send_json_error( array( 'message' => __( 'We could not save your answers just now. Please try again in a moment.', 'hairy-hair' ) ) );
         }
-
-        // Optional Zoho sync — does not block the response if plugin is inactive
-        if ( ! function_exists( 'is_plugin_active' ) ) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        if ( isset( $guard['duplicate'] ) ) {
+            wp_send_json_success( array( 'message' => $guard['duplicate']['message'], 'duplicate' => true ) );
         }
-        if ( is_plugin_active( 'connect-with-zoho/class-connect-with-zoho.php' ) ) {
-            $zoho_obj = new Connect_To_Zoho();
-            $zoho_obj->updateInsertCRMrecord( 'Leads', '', $zoho_data );
-        }
+        $guard = $guard['guard'];
 
-        wp_send_json_success( array( 'message' => "Information inserted. Redirecting..." ) );
-        exit;
-
-        /*$where_column = $email ? 'email' : 'email';
-        $where_value  = $email ? $email : $email;
-        $where_format = $email ? '%s' : '%s';*/
-
-        /*if ( $existing ) {
-            $updated = $wpdb->update(
-                $table,
-                $data,
-                array( $where_column => $where_value ),
-                $formats,
-                array( $where_format )
-            );
-
-            if ( $updated !== false ) {
-                wp_send_json_success( array( 'message' => "Information updated. Redirecting..." ) );
+        // A guest's own previous lead, proven by the server-side guest-access token (not by email).
+        $token_lead_id = 0;
+        if ( ! $user_id && function_exists( 'hh_guest_access_row' ) ) {
+            $prev = hh_guest_access_row( 'lead' );
+            if ( $prev && strtolower( trim( $prev['email'] ) ) === $email ) {
+                $token_lead_id = (int) $prev['ID'];
             }
-            wp_send_json_error( array( 'message' => 'Failed to update record.' ) );
+        }
 
-        } else { 
-            $inserted = $this->wpdb->insert(
-                $table,
-                array_merge( [ $where_column => $where_value ], $data ),
-                array_merge( [ $where_format ], $formats )
-            );
-            //$inserted = $this->wpdb->insert($table ,$data, $formats );
-            if ( $inserted ) {
-                wp_send_json_success( array( 'message' => "Information inserted. Redirecting..." ) );
-            } 
-            wp_send_json_error( array( 'message' => 'Failed to insert record.' ) );            
-        }*/
+        // One Lead per email (runs under the per-email lock taken by the guard above, so concurrent
+        // submissions for the same email are serialised and cannot both insert).
+        $existing = $this->resolve_existing_lead( $email, (int) $user_id, $token_lead_id );
+        $saved_message = __( 'Your information has been saved. Redirecting...', 'hairy-hair' );
+
+        if ( 'ignore' === $existing['action'] ) {
+            // Rule 3: a registered customer's Lead that is already in Zoho is never changed by a quiz
+            // submission: no insert, no update, no Zoho call. Same response as a save (no email enumeration).
+            Hairy_Submission_Guard::complete( $guard, (int) $existing['id'], $saved_message );
+            wp_send_json_success( array( 'message' => $saved_message, 'crm' => 'pending' ) );
+        }
+
+        $row = array_merge( $data, array( 'submission_date' => current_time( 'mysql' ) ) );
+        if ( Hairy_Quiz_DB_Migrations::is_current() ) {
+            $row['zoho_sync_status'] = 'pending';
+        } else {
+            // Schema not upgraded yet: never lose answers; keep the Step 2/3 values as JSON in quiz_answers.
+            $v4 = array( 'consent_to_contact', 'age_group', 'current_hair_loss', 'explain_allergies', 'explain_medications' );
+            $row['quiz_answers'] = wp_json_encode( array_intersect_key( $row, array_flip( $v4 ) ) );
+            $row = array_diff_key( $row, array_flip( $v4 ) );
+        }
+
+        $prev_lead_id = $token_lead_id;
+        if ( 'update' === $existing['action'] ) {
+            // Rule 2: authorised update of the guest Lead (same ID, user_id and zoho_id untouched).
+            $lead_id = (int) $existing['id'];
+            if ( isset( $row['zoho_sync_status'] ) ) {
+                if ( 'create_uncertain' === $existing['zoho_sync_status'] ) {
+                    unset( $row['zoho_sync_status'] ); // a CREATE may have landed: keep the flag so the retry searches first
+                } else {
+                    $row['zoho_sync_attempts'] = 0;
+                    $row['zoho_sync_error']    = null;
+                }
+            }
+            $saved = $this->wpdb->update( $table, $row, array( 'ID' => $lead_id, 'user_id' => 0 ) );
+            if ( false === $saved ) {
+                Hairy_Submission_Guard::release( $guard );
+                wp_send_json_error( array( 'message' => 'Failed to update record.' ) );
+            }
+            $prev_lead_id = 0;
+        } else {
+            $row['user_id'] = $user_id ? (int) $user_id : 0;
+            if ( 'park' === $existing['action'] && isset( $row['zoho_sync_status'] ) ) {
+                // Same email as an unsynced Lead this visitor cannot prove is theirs: keep the answers,
+                // never overwrite the other Lead, and do not sync (no duplicate Zoho Lead). Staff review.
+                $row['zoho_sync_status'] = 'needs_review';
+                $row['zoho_sync_error']  = 'UNVERIFIED_EXISTING_EMAIL';
+            }
+            if ( ! $this->wpdb->insert( $table, $row ) ) {
+                Hairy_Submission_Guard::release( $guard );
+                wp_send_json_error( array( 'message' => 'Failed to insert record.' ) );
+            }
+            $lead_id = (int) $this->wpdb->insert_id;
+        }
+        Hairy_Submission_Guard::complete( $guard, $lead_id, $saved_message );
+
+        if ( $user_id ) {
+            update_user_meta($user_id, 'first_name', $first_name);
+            update_user_meta($user_id, 'last_name', $last_name);
+            update_user_meta($user_id, 'phone', $phone);
+            update_user_meta($user_id, 'dob', $dob);
+            update_user_meta($user_id, 'gender', $gender);
+            update_user_meta($user_id, 'email', $email);
+        } elseif ( function_exists( 'hh_guest_access_grant' ) && 'park' !== $existing['action'] ) {
+            hh_guest_access_grant( $email, 'lead', $lead_id ); // Replaces the old lead_user_email cookie.
+        }
+
+        // Zoho: saved locally first; sync failures are queued for retry, never lost or blocking.
+        $crm = 'not_configured';
+        if ( 'park' !== $existing['action'] && class_exists( 'HH_Zoho_Lead_Sync' ) ) {
+            try {
+                $crm = HH_Zoho_Lead_Sync::sync_lead( $lead_id, array( 'prev_lead_id' => $prev_lead_id, 'lock_wait' => 10 ) );
+            } catch ( \Throwable $e ) {
+                $crm = 'error';
+                error_log( sprintf( 'HairyHair lead #%d: unexpected Zoho sync error (%s).', $lead_id, get_class( $e ) ) );
+            }
+        }
+
+        wp_send_json_success( array(
+            'message' => 'synced' === $crm ? "Information inserted. Redirecting..." : $saved_message,
+            'crm'     => 'synced' === $crm ? 'synced' : 'pending', // Saved locally; CRM sync not (yet) confirmed.
+        ) );
+        exit;
+    }
+
+    /**
+     * Decides what a lead-form submission does with existing Leads for the same (normalised) email.
+     * Caller holds the per-email lock. Never deletes or merges rows.
+     *
+     * - No row with this email                                -> insert.
+     * - Any row owned by a WordPress user AND with a zoho_id    -> ignore (rule 3; checked first, most protective).
+     * - Guest row (user_id 0) without zoho_id, and the submitter is authorised for it
+     *   (guest-access token for that exact row, or a logged-in account with this email verified)
+     *                                                           -> update that row (rule 2).
+     * - Guest row without zoho_id, submitter not authorised     -> park: new row, needs_review, no Zoho sync.
+     * - Anything else                                         -> insert (existing P3 behaviour; the shared
+     *   Zoho sync applies its ownership rules: update own Lead, or park possible duplicates for review).
+     *
+     * @param string $email         Normalised email.
+     * @param int    $user_id       Submitting WordPress user (0 = guest).
+     * @param int    $token_lead_id Lead row proven by the guest-access token, or 0.
+     * @return array{action: string, id?: int, zoho_sync_status?: string|null}
+     */
+    protected function resolve_existing_lead( $email, $user_id, $token_lead_id ) {
+        $rows = $this->wpdb->get_results( $this->wpdb->prepare(
+            "SELECT * FROM {$this->core_manager->get_table_leads_results()} WHERE LOWER(TRIM(email)) = %s ORDER BY ID DESC", // * : works before and after the zoho_id / sync-state migrations
+            $email
+        ) );
+        if ( ! $rows ) {
+            return array( 'action' => 'insert' );
+        }
+
+        $has_zoho = function ( $r ) {
+            $z = isset( $r->zoho_id ) ? trim( (string) $r->zoho_id ) : '';
+            return '' !== $z && '0' !== $z;
+        };
+        $real_user = function ( $r ) {
+            $id = (int) $r->user_id; // legacy rows stored a Zoho Lead ID in user_id: not a WordPress user
+            return $id > 0 && $id < 100000000000 && get_userdata( $id );
+        };
+
+        foreach ( $rows as $r ) {
+            if ( $real_user( $r ) && $has_zoho( $r ) ) {
+                return array( 'action' => 'ignore', 'id' => (int) $r->ID );
+            }
+        }
+
+        $guest_unsynced = array_values( array_filter( $rows, function ( $r ) use ( $has_zoho ) {
+            return 0 === (int) $r->user_id && ! $has_zoho( $r );
+        } ) );
+        if ( $guest_unsynced ) {
+            $verified_account = false;
+            if ( $user_id > 0 && class_exists( 'HH_Registration_Lead' ) ) {
+                $user = get_userdata( $user_id );
+                $verified_account = $user && HH_Registration_Lead::normalize_email( $user->user_email ) === $email && HH_Registration_Lead::is_email_verified( $user_id );
+            }
+            foreach ( $guest_unsynced as $r ) {
+                if ( ( $token_lead_id && (int) $r->ID === $token_lead_id ) ) {
+                    return array( 'action' => 'update', 'id' => (int) $r->ID, 'zoho_sync_status' => isset( $r->zoho_sync_status ) ? $r->zoho_sync_status : null );
+                }
+            }
+            if ( $verified_account ) {
+                $r = $guest_unsynced[0]; // newest
+                return array( 'action' => 'update', 'id' => (int) $r->ID, 'zoho_sync_status' => isset( $r->zoho_sync_status ) ? $r->zoho_sync_status : null );
+            }
+            return array( 'action' => 'park' );
+        }
+
+        return array( 'action' => 'insert' );
     }
 }

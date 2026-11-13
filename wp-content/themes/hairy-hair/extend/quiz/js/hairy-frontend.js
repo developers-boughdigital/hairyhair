@@ -77,7 +77,10 @@ jQuery(document).ready(function ($) {
       type: "POST",
       data: finalFormData,
       success: function (response) {
-        $submitButton.prop("disabled", false).text("Submit Quiz");
+        // Stay disabled after success (the page redirects); re-enable only on error.
+        if (!response.success) {
+          $submitButton.prop("disabled", false).text("Submit Quiz");
+        }
 
         displayFrontendMessage(response.data.message, "success");
 
@@ -159,6 +162,16 @@ $(document).ready(function () {
           }
         });
 
+        // Required radio groups (marked data-required), e.g. age group and current hair loss.
+        $currentStepEl.find('input[type="radio"][data-required]').each(function () {
+          var $question = $(this).closest(".hair-loss-question");
+          var answered = $currentStepEl.find('input[name="' + this.name + '"]:checked').length > 0;
+          $question.toggleClass("error", !answered);
+          if (!answered) {
+            isStepValid = false;
+          }
+        });
+
         if (!isStepValid) {
           $leadMessage
             .removeClass("success error")
@@ -223,6 +236,18 @@ $(document).ready(function () {
   });
 
   displaySteps(1);
+
+  // Step 3: show an explanation box only while its question is answered "Yes".
+  // Typed text is kept when hidden (the server ignores it unless the answer is "Yes").
+  function syncExplanations() {
+    $(".hh-explanation").each(function () {
+      var question = $(this).data("explains");
+      var answer = $('input[name="' + question + '"]:checked').val();
+      $(this).toggle(answer === "Yes");
+    });
+  }
+  $(document).on("change", 'input[name="allergies_or_sensitivities"], input[name="taking_any_medications"]', syncExplanations);
+  syncExplanations();
 });
 
 function attachFieldValidation($form) {
@@ -350,10 +375,18 @@ $(document).ready(function () {
     const expectedResultsChecked = $leadForm
       .find('input[name="expacted_results"]:checked')
       .val();
+    const ageGroupChecked = $leadForm
+      .find('input[name="age_group"]:checked')
+      .val();
+    const currentHairLossChecked = $leadForm
+      .find('input[name="current_hair_loss"]:checked')
+      .val();
 
     if (
       hairLossDurationChecked === undefined ||
-      expectedResultsChecked === undefined
+      expectedResultsChecked === undefined ||
+      ageGroupChecked === undefined ||
+      currentHairLossChecked === undefined
     ) {
       isValid = false;
       step = 2;
@@ -390,6 +423,24 @@ $(document).ready(function () {
       return;
     }
 
+    // Explanations are required when the related answer is "Yes".
+    var missingExplanation = false;
+    $leadForm.find(".hh-explanation").each(function () {
+      var question = $(this).data("explains");
+      var answer = $leadForm.find('input[name="' + question + '"]:checked').val();
+      var $text = $(this).find("textarea");
+      var missing = answer === "Yes" && $.trim($text.val()) === "";
+      $text.toggleClass("error", missing);
+      if (missing) {
+        missingExplanation = true;
+      }
+    });
+    if (missingExplanation) {
+      displaySteps(3);
+      displayFrontendLeadMessage("Please add the requested details for each question answered \"Yes\".", "error");
+      return;
+    }
+
     $leadSubmitButton.prop("disabled", true).text("Submitting...");
 
     $.ajax({
@@ -397,7 +448,10 @@ $(document).ready(function () {
       type: "POST",
       data: $leadForm.serialize(),
       success: function (response) {
-        $leadSubmitButton.prop("disabled", false).text("Submit Quiz");
+        // Stay disabled after success (the page redirects); re-enable only on error.
+        if (!response.success) {
+          $leadSubmitButton.prop("disabled", false).text("Submit Quiz");
+        }
 
         if (response.success) {
           if (response.data && response.data.message) {
@@ -482,4 +536,25 @@ $(document).ready(function () {
 
   // Set initial state on page load
   updateNextBtnState();
+});
+
+// Server-issued submission token (fetched via admin-ajax so cached pages still get a fresh one).
+// Re-sent unchanged on retries, so the server can recognise a repeated request and return the
+// saved result instead of storing it twice.
+jQuery(function ($) {
+  $("#hairy-frontend-quiz-form, #hairy-frontend-get-started-form").each(function () {
+    var $form = $(this);
+    var $input = $form.find('input[name="hh_submission_token"]');
+    if (!$input.length) {
+      $input = $('<input type="hidden" name="hh_submission_token" value="">').appendTo($form);
+    }
+    if (typeof hairyQuiz === "undefined") {
+      return;
+    }
+    $.post(hairyQuiz.ajax_url, { action: "hh_submission_token" }).done(function (r) {
+      if (r && r.success && r.data && r.data.token) {
+        $input.val(r.data.token);
+      }
+    });
+  });
 });

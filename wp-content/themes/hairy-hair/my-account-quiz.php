@@ -94,20 +94,16 @@
                     <div class="row">
                         <?php 
 
-                        $email = '';
-                        if (!$user_id) $email = isset($_COOKIE['quiz_user_email']) ? sanitize_email($_COOKIE['quiz_user_email']) : '';
+                        // Guests: only their own quiz (server-issued guest-access token), never an email cookie.
+                        $guest_quiz = ( ! $user_id && function_exists( 'hh_guest_access_row' ) ) ? hh_guest_access_row( 'quiz' ) : null;
 
-                        if (isset($user_id) || (isset($email) && trim($email) != '')) {
+                        if ( $user_id || $guest_quiz ) {
                             global $wpdb;
 
-                            $recommended_products = $wpdb->get_var(
-                                $wpdb->prepare(
-                                    "SELECT recommended_products 
-                                        FROM {$wpdb->prefix}hh_quiz_results 
-                                        WHERE " . ($user_id ? 'user_id = %d' : 'email = %s'),
-                                    $user_id ? $user_id : $email
-                                )
-                            );
+                            // Newest submission (each quiz submission is kept as its own history row).
+                            $recommended_products = $user_id
+                                ? $wpdb->get_var( $wpdb->prepare( "SELECT recommended_products FROM {$wpdb->prefix}hh_quiz_results WHERE user_id = %d ORDER BY ID DESC LIMIT 1", $user_id ) )
+                                : $guest_quiz['recommended_products'];
 
                             // echo json_encode($recommended_products); 
                             $recommended_products = true;$product_ids = [2482, 2242, 2249];

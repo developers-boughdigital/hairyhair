@@ -101,11 +101,15 @@ add_action('init', function() {
 
     $args = [
         'labels' => $labels,
-        'public' => true,
+        // Submissions hold names, phone, DOB, email and health answers: admin-only, never public/REST.
+        'public' => false,
+        'publicly_queryable' => false,
+        'exclude_from_search' => true,
+        'show_in_nav_menus' => false,
         'show_ui' => true,
         'show_in_menu' => 'hairy-hair-quiz',
         'supports' => ['title', 'editor', 'custom-fields'],
-        'show_in_rest' => true
+        'show_in_rest' => false
     ];
 
     register_post_type('submission', $args);
@@ -411,8 +415,10 @@ function hairy_quiz_submit() {
     update_post_meta($post_id, 'answers_raw', $answers_raw);
     wp_update_post(['ID' => $post_id, 'post_content' => $content]);
 
-    // 7️⃣ Handle file upload safely
-    if (!empty($_FILES['quiz_file']['name'])) {
+    // 7️⃣ File uploads disabled: this public endpoint used to put files from anyone into the public
+    // Media Library. Scalp photos go through the theme's private upload flow (inc/private-uploads.php).
+    // Existing uploads are left untouched.
+    if (false && !empty($_FILES['quiz_file']['name'])) {
     require_once(ABSPATH . 'wp-admin/includes/file.php');
     require_once(ABSPATH . 'wp-admin/includes/media.php');
     require_once(ABSPATH . 'wp-admin/includes/image.php');
