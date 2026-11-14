@@ -30,6 +30,13 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 		'untracked'        => 'Not tracked (older leads)',
 	);
 
+	/** Quiz progress (lead_status) filter values => labels ('unknown' = NULL, historical rows left for review). */
+	const STATUS_FILTERS = array(
+		'pending'   => 'Pending',
+		'completed' => 'Completed',
+		'unknown'   => 'Unknown (review)',
+	);
+
 	/** @var Hairy_Leads_Admin */
 	protected $admin;
 
@@ -38,6 +45,9 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 
 	/** @var bool Whether the table has the sync-state columns. */
 	protected $has_sync;
+
+	/** @var bool Whether the table has the lead_status column. */
+	protected $has_status;
 
 	/** @var int|null Current page after clamping to the available pages. */
 	protected $clamped_page = null;
@@ -92,19 +102,24 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 			list( $from, $to ) = array( $to, $from );
 		}
 
+		$status = isset( $src['status'] ) && is_string( $src['status'] ) ? sanitize_key( $src['status'] ) : '';
+		if ( ! isset( self::STATUS_FILTERS[ $status ] ) ) {
+			$status = '';
+		}
+
 		$per_page = isset( $src['per_page'] ) ? absint( $src['per_page'] ) : 20;
 		if ( ! in_array( $per_page, self::PER_PAGE_OPTIONS, true ) ) {
 			$per_page = 20;
 		}
 
-		return array( 's' => $s, 'sync' => $sync, 'date_from' => $from, 'date_to' => $to, 'per_page' => $per_page );
+		return array( 's' => $s, 'status' => $status, 'sync' => $sync, 'date_from' => $from, 'date_to' => $to, 'per_page' => $per_page );
 	}
 
 	/**
 	 * @return bool Whether any filter (other than page size) is active.
 	 */
 	public function filters_active() {
-		return '' !== $this->filters['s'] || '' !== $this->filters['sync'] || '' !== $this->filters['date_from'] || '' !== $this->filters['date_to'];
+		return '' !== $this->filters['s'] || '' !== $this->filters['status'] || '' !== $this->filters['sync'] || '' !== $this->filters['date_from'] || '' !== $this->filters['date_to'];
 	}
 
 	public function get_columns() {
@@ -114,6 +129,7 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 			'email'  => __( 'Email', 'hairy-hair' ),
 			'dob'    => __( 'DOB', 'hairy-hair' ),
 			'state'  => __( 'City / State', 'hairy-hair' ),
+			'quiz'   => __( 'Quiz', 'hairy-hair' ),
 			'zoho'   => __( 'Zoho sync', 'hairy-hair' ),
 			'date'   => __( 'Date', 'hairy-hair' ),
 			'action' => __( 'Action', 'hairy-hair' ),
@@ -149,6 +165,14 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 			}
 			$where[] = '(' . implode( ' OR ', $parts ) . ')';
 		}
+		if ( '' !== $f['status'] && $this->has_status ) {
+			if ( 'unknown' === $f['status'] ) {
+				$where[] = 'lead_status IS NULL';
+			} else {
+				$where[] = 'lead_status = %s';
+				$args[]  = self::STATUS_FILTERS[ $f['status'] ];
+			}
+		}
 		if ( '' !== $f['sync'] && $this->has_sync ) {
 			if ( 'untracked' === $f['sync'] ) {
 				$where[] = 'zoho_sync_status IS NULL';
@@ -171,7 +195,8 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 	public function prepare_items() {
 		global $wpdb;
 		$table          = HH_Leads_Admin_Table_Name::get();
-		$this->has_sync = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", 'zoho_sync_status' ) );
+		$this->has_sync   = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", 'zoho_sync_status' ) );
+		$this->has_status = (bool) $wpdb->get_var( $wpdb->prepare( "SHOW COLUMNS FROM `{$table}` LIKE %s", 'lead_status' ) );
 		$per_page       = $this->filters['per_page'];
 
 		list( $where, $args ) = $this->where();
@@ -246,6 +271,12 @@ class Hairy_Leads_List_Table extends WP_List_Table {
 	protected function column_state( $item ) {
 		$parts = array_filter( array( trim( (string) $item->city ), trim( (string) $item->state ) ), 'strlen' );
 		return $parts ? esc_html( implode( ', ', $parts ) ) : '<span class="hh-muted">&mdash;</span>';
+	}
+
+	protected function column_quiz( $item ) {
+		$status = property_exists( $item, 'lead_status' ) ? $item->lead_status : null;
+		$label  = in_array( $status, array( 'Pending', 'Completed' ), true ) ? $status : 'Unknown';
+		return '<span class="hh-badge hh-quiz--' . esc_attr( strtolower( $label ) ) . '">' . esc_html( $label ) . '</span>';
 	}
 
 	protected function column_zoho( $item ) {

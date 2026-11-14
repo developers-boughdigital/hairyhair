@@ -34,6 +34,188 @@ class HH_Zoho_Lead_Sync {
 	const MAX_ATTEMPTS = 6;
 	const LEAD_SOURCE  = 'Website - Quiz Questionnaire'; // Existing lead-form value, sent on CREATE only.
 
+	/** Zoho Leads field for quiz progress (local column lead_status). */
+	const ZOHO_LEAD_STATUS_FIELD = 'Lead_Status';
+
+	/** Cached result of the Zoho Lead_Status field check (option, not autoloaded). */
+	const LEAD_STATUS_FIELD_OPTION = 'hh_zoho_lead_status_field';
+
+	/** The picklist values the quiz writes. */
+	const LEAD_STATUS_VALUES = array( 'Pending', 'Completed' );
+
+	/**
+	 * Whether quiz progress (Pending/Completed) is written to Zoho's Lead_Status field.
+	 *
+	 * ON by default. Each write is still conditional on the field being verified in Zoho
+	 * (lead_status_field_state()); define HH_ZOHO_SYNC_LEAD_STATUS as false to switch it off.
+	 *
+	 * @return bool
+	 */
+	public static function lead_status_sync_enabled() {
+		return (bool) apply_filters( 'hh_zoho_sync_lead_status', ! ( defined( 'HH_ZOHO_SYNC_LEAD_STATUS' ) && ! HH_ZOHO_SYNC_LEAD_STATUS ) );
+	}
+
+	/**
+	 * Verifies in Zoho (read-only field metadata) that Leads has the Lead_Status picklist field and
+	 * that it allows both "Pending" and "Completed". Cached: ok for 12 h, a configuration problem for
+	 * 1 h (so a fix in Zoho is picked up), an HTTP/API error is not cached.
+	 * HH_ZOHO_LEAD_STATUS_VERIFIED = true skips the check (field confirmed manually in Zoho).
+	 *
+	 * @param bool $force Ignore the cache.
+	 * @return array{state: string, code?: string, values?: string[], checked?: int}
+	 *         state: ok | missing | not_picklist | values_missing | denied | error
+	 */
+	public static function lead_status_field_state( $force = false ) {
+		if ( defined( 'HH_ZOHO_LEAD_STATUS_VERIFIED' ) && HH_ZOHO_LEAD_STATUS_VERIFIED ) {
+			return array( 'state' => 'ok', 'source' => 'HH_ZOHO_LEAD_STATUS_VERIFIED' );
+		}
+		$cached = get_option( self::LEAD_STATUS_FIELD_OPTION );
+		if ( ! $force && is_array( $cached ) && isset( $cached['state'], $cached['checked'] ) ) {
+			$ttl = 'ok' === $cached['state'] ? 12 * HOUR_IN_SECONDS : HOUR_IN_SECONDS;
+			if ( time() - (int) $cached['checked'] < $ttl ) {
+				return $cached;
+			}
+		}
+
+		$domain  = untrailingslashit( esc_url_raw( (string) get_option( 'zoho_api_domain' ) ) );
+		$version = (string) get_option( 'zoho_api_version' );
+		$token   = (string) get_option( 'zoho_access_token' );
+		if ( '' === $domain || ! preg_match( '/^v\d+$/', $version ) || '' === $token ) {
+			return array( 'state' => 'error', 'code' => 'CONFIG_MISSING' );
+		}
+		$response = wp_remote_get(
+			$domain . '/crm/' . $version . '/settings/fields?module=Leads',
+			array( 'timeout' => 15, 'headers' => array( 'Authorization' => 'Bearer ' . $token ) )
+		);
+		if ( is_wp_error( $response ) ) {
+			return array( 'state' => 'error', 'code' => 'HTTP_REQUEST_FAILED' );
+		}
+		$http = (int) wp_remote_retrieve_response_code( $response );
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		$code = ( is_array( $body ) && isset( $body['code'] ) && preg_match( '/^[A-Z0-9_]{1,64}$/', (string) $body['code'] ) ) ? $body['code'] : 'HTTP_' . $http;
+
+		if ( in_array( $code, array( 'OAUTH_SCOPE_MISMATCH', 'NO_PERMISSION', 'NOT_ALLOWED' ), true ) ) {
+			$result = array( 'state' => 'denied', 'code' => $code );
+		} elseif ( 200 !== $http || ! isset( $body['fields'] ) || ! is_array( $body['fields'] ) ) {
+			return array( 'state' => 'error', 'code' => $code ); // e.g. expired token: retried, not cached
+		} else {
+			$field = null;
+			foreach ( $body['fields'] as $f ) {
+				if ( isset( $f['api_name'] ) && self::ZOHO_LEAD_STATUS_FIELD === $f['api_name'] ) {
+					$field = $f;
+					break;
+				}
+			}
+			$values = array();
+			foreach ( (array) ( $field['pick_list_values'] ?? array() ) as $v ) {
+				if ( isset( $v['actual_value'] ) ) {
+					$values[] = (string) $v['actual_value'];
+				}
+			}
+			if ( ! $field ) {
+				$result = array( 'state' => 'missing' );
+			} elseif ( 'picklist' !== ( $field['data_type'] ?? '' ) ) {
+				$result = array( 'state' => 'not_picklist', 'code' => substr( (string) ( $field['data_type'] ?? '' ), 0, 32 ) );
+			} elseif ( array_diff( self::LEAD_STATUS_VALUES, $values ) ) {
+				$result = array( 'state' => 'values_missing', 'values' => array_values( array_diff( self::LEAD_STATUS_VALUES, $values ) ) );
+			} else {
+				$result = array( 'state' => 'ok' );
+			}
+		}
+		$result['checked'] = time();
+		update_option( self::LEAD_STATUS_FIELD_OPTION, $result, false );
+		if ( 'ok' !== $result['state'] ) {
+			HH_Registration_Zoho::log( 'HairyHair Zoho: Lead_Status field not ready (' . $result['state'] . ( isset( $result['values'] ) ? ': missing ' . implode( ', ', $result['values'] ) : '' ) . '); quiz status is not written until it is fixed in Zoho.' );
+		}
+		return $result;
+	}
+
+	/**
+	 * Current Lead_Status of a Zoho Lead (read-only GET).
+	 *
+	 * @param string $zoho_id Zoho Lead ID.
+	 * @return string|null|WP_Error Status ('' when empty), null when the Lead is not found, or an error.
+	 */
+	public static function zoho_lead_status( $zoho_id ) {
+		$domain  = untrailingslashit( esc_url_raw( (string) get_option( 'zoho_api_domain' ) ) );
+		$version = (string) get_option( 'zoho_api_version' );
+		$token   = (string) get_option( 'zoho_access_token' );
+		if ( '' === $domain || ! preg_match( '/^v\d+$/', $version ) || '' === $token || ! self::valid_id( $zoho_id ) ) {
+			return new WP_Error( 'CONFIG_MISSING' );
+		}
+		$response = wp_remote_get(
+			$domain . '/crm/' . $version . '/Leads/' . rawurlencode( (string) $zoho_id ) . '?fields=' . self::ZOHO_LEAD_STATUS_FIELD,
+			array( 'timeout' => 15, 'headers' => array( 'Authorization' => 'Bearer ' . $token ) )
+		);
+		if ( is_wp_error( $response ) ) {
+			return new WP_Error( 'HTTP_REQUEST_FAILED' );
+		}
+		$http = (int) wp_remote_retrieve_response_code( $response );
+		if ( 204 === $http ) {
+			return null;
+		}
+		$body = json_decode( wp_remote_retrieve_body( $response ), true );
+		if ( 200 === $http && isset( $body['data'][0] ) ) {
+			return (string) ( $body['data'][0][ self::ZOHO_LEAD_STATUS_FIELD ] ?? '' );
+		}
+		$code = ( is_array( $body ) && isset( $body['code'] ) && preg_match( '/^[A-Z0-9_]{1,64}$/', (string) $body['code'] ) ) ? $body['code'] : 'HTTP_' . $http;
+		return new WP_Error( $code );
+	}
+
+	/**
+	 * Lead_Status to send with one Zoho write.
+	 *
+	 * - Completed locally -> "Completed" (CREATE or UPDATE).
+	 * - Pending locally   -> "Pending" on CREATE; on UPDATE only if Zoho does not already say
+	 *   "Completed" (checked locally first, then with a read of the Lead), so it never downgrades.
+	 *
+	 * @param object $row    Lead row.
+	 * @param string $method POST or PUT.
+	 * @param string $target Zoho Lead ID for PUT.
+	 * @return array{value: ?string, note: ?string, retry: ?string}
+	 *         note  = why the status was not written (recorded on the row, never silent);
+	 *         retry = the status could not be decided now (sync is retried).
+	 */
+	protected static function lead_status_for( $row, $method, $target ) {
+		global $wpdb;
+		$out    = array( 'value' => null, 'note' => null, 'retry' => null );
+		$status = isset( $row->lead_status ) ? (string) $row->lead_status : '';
+		if ( ! self::lead_status_sync_enabled() || ! in_array( $status, self::LEAD_STATUS_VALUES, true ) ) {
+			return $out;
+		}
+		$field = self::lead_status_field_state();
+		if ( 'error' === $field['state'] ) {
+			$out['retry'] = 'LEAD_STATUS_CHECK_' . ( $field['code'] ?? 'FAILED' );
+			return $out;
+		}
+		if ( 'ok' !== $field['state'] ) {
+			$out['note'] = 'LEAD_STATUS_' . strtoupper( $field['state'] );
+			return $out;
+		}
+		if ( 'Completed' === $status || 'POST' === $method ) {
+			$out['value'] = $status;
+			return $out;
+		}
+		// Pending update: keep a Completed Zoho Lead Completed.
+		$local_done = $wpdb->get_var( $wpdb->prepare(
+			'SELECT ID FROM `' . HH_Registration_Lead::table() . "` WHERE zoho_id = %s AND lead_status = 'Completed' AND ID <> %d LIMIT 1",
+			$target,
+			(int) $row->ID
+		) );
+		if ( $local_done ) {
+			return $out;
+		}
+		$current = self::zoho_lead_status( $target );
+		if ( is_wp_error( $current ) ) {
+			$out['retry'] = 'LEAD_STATUS_READ_' . $current->get_error_code();
+			return $out;
+		}
+		if ( 'Completed' !== $current ) {
+			$out['value'] = 'Pending'; // also when the Lead was not found: the PUT then reports it
+		}
+		return $out;
+	}
+
 	const S_PENDING   = 'pending';
 	const S_SYNCED    = 'synced';
 	const S_RETRY     = 'retry';
@@ -379,37 +561,46 @@ class HH_Zoho_Lead_Sync {
 	 * @param object $row Lead row.
 	 * @return array
 	 */
-	public static function lead_form_fields( $row ) {
+	public static function lead_form_fields( $row, $method = 'POST' ) {
 		$fields = array(
-			'First_Name'                                     => $row->first_name,
-			'Last_Name'                                      => $row->last_name,
-			'Email'                                          => $row->email,
-			'Phone'                                          => $row->phone,
-			'Date_Of_Birth'                                  => date( 'Y-m-d', strtotime( $row->dob ) ),
-			'Gender'                                         => $row->gender,
-			'How_long_have_you_been_experiencing_hair_loss'  => $row->hair_loss_duration,
-			'What_results_are_you_hoping_to_achieve'         => $row->expacted_results,
-			'Any_known_Allergies_to_medications_supplements' => $row->allergies_or_sensitivities,
-			'Are_you_currently_taking_any_other_medications' => $row->taking_any_medications,
-			'Do_you_have_a_history_with_high_blood_pressure' => $row->high_blood_pressure,
-			'Lead_Source'                                    => self::LEAD_SOURCE,
-			'Website'                                        => get_site_url() . '/lets-get-started',
+			'First_Name' => $row->first_name,
+			'Last_Name'  => $row->last_name,
+			'Email'      => $row->email,
 		);
-		$optional = array(
-			'What_is_your_age_group'                              => isset( $row->age_group ) ? (string) $row->age_group : '',
-			'Which_of_the_following_best_describes_your_current' => isset( $row->current_hair_loss ) ? (string) $row->current_hair_loss : '',
-			'Explain_Allergies_or_Sensitivities'                  => isset( $row->explain_allergies ) ? (string) $row->explain_allergies : '',
-			'Explain_Other_Medications_or_Supplements'            => isset( $row->explain_medications ) ? (string) $row->explain_medications : '',
+		// Every other field is only sent when it has a value, so a Step 1 (partial) sync never blanks
+		// answers already held in Zoho.
+		$map = array(
+			'Phone'                                              => 'phone',
+			'Gender'                                             => 'gender',
+			'How_long_have_you_been_experiencing_hair_loss'      => 'hair_loss_duration',
+			'What_results_are_you_hoping_to_achieve'             => 'expacted_results',
+			'What_is_your_age_group'                             => 'age_group',
+			'Which_of_the_following_best_describes_your_current' => 'current_hair_loss',
+			'Any_known_Allergies_to_medications_supplements'     => 'allergies_or_sensitivities',
+			'Explain_Allergies_or_Sensitivities'                 => 'explain_allergies',
+			'Are_you_currently_taking_any_other_medications'     => 'taking_any_medications',
+			'Explain_Other_Medications_or_Supplements'           => 'explain_medications',
+			'Do_you_have_a_history_with_high_blood_pressure'     => 'high_blood_pressure',
 		);
-		foreach ( $optional as $api => $value ) {
+		foreach ( $map as $api => $column ) {
+			$value = isset( $row->$column ) ? (string) $row->$column : '';
 			if ( '' === trim( $value ) ) {
 				continue;
 			}
 			$fields[ $api ] = 0 === strpos( $api, 'Explain_' ) ? nl2br( esc_html( $value ), false ) : $value;
 		}
+		$dob = isset( $row->dob ) ? strtotime( (string) $row->dob ) : false;
+		if ( $dob ) {
+			$fields['Date_Of_Birth'] = date( 'Y-m-d', $dob );
+		}
 		if ( isset( $row->consent_to_contact ) && null !== $row->consent_to_contact ) {
 			$fields['Consent_To_Contact'] = (bool) (int) $row->consent_to_contact;
 		}
+		// Lead_Status (quiz progress) is added by apply() after the Zoho field check: lead_status_for().
+		if ( 'POST' === $method ) {
+			$fields['Lead_Source'] = self::LEAD_SOURCE; // keep the Lead's original source on updates
+		}
+		$fields['Website'] = get_site_url() . '/lets-get-started';
 		return $fields;
 	}
 
@@ -496,8 +687,6 @@ class HH_Zoho_Lead_Sync {
 	 */
 	protected static function apply( $row, array $decision, $attempt, $prev ) {
 		$lead_id = (int) $row->ID;
-		$fields  = self::lead_form_fields( $row );
-
 		switch ( $decision['action'] ) {
 			case 'adopt':
 				self::set_state( $lead_id, self::S_SYNCED, null, $decision['id'] );
@@ -513,13 +702,22 @@ class HH_Zoho_Lead_Sync {
 				return self::retry_or_fail( $lead_id, $prev, $attempt, $decision['reason'] );
 
 			case 'update':
-				unset( $fields['Lead_Source'] ); // Keep the Lead's original source.
-				return self::call_zoho( $lead_id, $prev, $attempt, 'PUT', $decision['id'], $fields );
-
 			case 'create':
-				// Recorded before the call: if the request dies mid-flight the row shows the uncertainty.
-				self::set_state( $lead_id, self::S_UNCERTAIN, 'CREATE_IN_PROGRESS' );
-				return self::call_zoho( $lead_id, $prev, $attempt, 'POST', '', $fields );
+				$method = 'update' === $decision['action'] ? 'PUT' : 'POST';
+				$target = 'PUT' === $method ? $decision['id'] : '';
+				$fields = self::lead_form_fields( $row, $method );
+				$ls     = self::lead_status_for( $row, $method, $target );
+				if ( $ls['retry'] ) {
+					return self::retry_or_fail( $lead_id, $prev, $attempt, $ls['retry'] ); // no write without a decided status
+				}
+				if ( null !== $ls['value'] ) {
+					$fields[ self::ZOHO_LEAD_STATUS_FIELD ] = $ls['value'];
+				}
+				if ( 'POST' === $method ) {
+					// Recorded before the call: if the request dies mid-flight the row shows the uncertainty.
+					self::set_state( $lead_id, self::S_UNCERTAIN, 'CREATE_IN_PROGRESS' );
+				}
+				return self::call_zoho( $lead_id, $prev, $attempt, $method, $target, $fields, $ls['note'] );
 		}
 		return self::retry_or_fail( $lead_id, $prev, $attempt, 'UNKNOWN_DECISION' );
 	}
@@ -527,7 +725,7 @@ class HH_Zoho_Lead_Sync {
 	/**
 	 * @return string Status after the call.
 	 */
-	protected static function call_zoho( $lead_id, $prev, $attempt, $method, $target, array $fields ) {
+	protected static function call_zoho( $lead_id, $prev, $attempt, $method, $target, array $fields, $note = null ) {
 		try {
 			$zoho     = new Connect_To_Zoho();
 			$returned = $zoho->updateInsertCRMrecord( 'Leads', $target, $fields );
@@ -558,7 +756,11 @@ class HH_Zoho_Lead_Sync {
 		}
 		$returned = trim( (string) $returned );
 		self::set_state( $lead_id, self::S_SYNCED, null, $returned );
-		self::log( $lead_id, sprintf( 'Zoho Lead %s %s', $returned, 'POST' === $method ? 'created' : 'updated' ) );
+		if ( $note ) {
+			// Answers are in Zoho, but the quiz status could not be written: visible on the Lead, not silent.
+			self::set_state( $lead_id, self::S_SYNCED, $note );
+		}
+		self::log( $lead_id, sprintf( 'Zoho Lead %s %s%s', $returned, 'POST' === $method ? 'created' : 'updated', $note ? ' without Lead_Status (' . $note . ')' : ( isset( $fields[ self::ZOHO_LEAD_STATUS_FIELD ] ) ? ', Lead_Status ' . $fields[ self::ZOHO_LEAD_STATUS_FIELD ] : '' ) ) );
 		return self::S_SYNCED;
 	}
 

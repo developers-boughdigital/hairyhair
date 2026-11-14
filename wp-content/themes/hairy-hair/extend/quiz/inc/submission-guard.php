@@ -67,9 +67,11 @@ class Hairy_Submission_Guard {
 	 * @param string $form   'lead' or 'quiz'.
 	 * @param string $email  Submission email.
 	 * @param array  $fields Fields that define "the same payload" (no nonce/token).
+	 * @param bool   $payload_window Also treat an identical payload within 2 minutes as a repeat, even
+	 *                               without the same token. Off for responses that depend on who is asking.
 	 * @return array|WP_Error ['duplicate' => record] | ['guard' => state] | WP_Error('busy')
 	 */
-	public static function begin( $form, $email, array $fields ) {
+	public static function begin( $form, $email, array $fields, $payload_window = true ) {
 		global $wpdb;
 		$email = strtolower( trim( (string) $email ) );
 		$lock  = ( 'lead' === $form ? 'hh_lead_' : 'hh_quiz_' ) . md5( $email );
@@ -81,10 +83,10 @@ class Hairy_Submission_Guard {
 		$fp    = hash_hmac( 'sha256', $form . '|' . $email . '|' . wp_json_encode( $fields ), wp_salt( 'nonce' ) );
 		$token = isset( $_POST[ self::TOKEN_FIELD ] ) ? wp_unslash( $_POST[ self::TOKEN_FIELD ] ) : '';
 		$token = self::valid_token( $token ) ? $token : '';
-		$state = array( 'lock' => $lock, 'fp' => $fp, 'token_key' => '' === $token ? '' : self::key( 'tok', $token ), 'fp_key' => self::key( 'fp', $fp ) );
+		$state = array( 'lock' => $lock, 'fp' => $fp, 'token_key' => '' === $token ? '' : self::key( 'tok', $token ), 'fp_key' => $payload_window ? self::key( 'fp', $fp ) : '' );
 
 		$by_token = $state['token_key'] ? get_transient( $state['token_key'] ) : false;
-		$record   = ( is_array( $by_token ) && isset( $by_token['fp'] ) && hash_equals( $by_token['fp'], $fp ) ) ? $by_token : get_transient( $state['fp_key'] );
+		$record   = ( is_array( $by_token ) && isset( $by_token['fp'] ) && hash_equals( $by_token['fp'], $fp ) ) ? $by_token : ( $state['fp_key'] ? get_transient( $state['fp_key'] ) : false );
 		if ( is_array( $record ) && ! empty( $record['row_id'] ) ) {
 			self::release( $state );
 			return array( 'duplicate' => $record );
@@ -98,13 +100,16 @@ class Hairy_Submission_Guard {
 	 * @param array  $state   From begin().
 	 * @param int    $row_id  Saved row.
 	 * @param string $message Response message for repeats.
+	 * @param array  $data    Extra response data replayed for repeats (e.g. the Step 1 state).
 	 */
-	public static function complete( array $state, $row_id, $message ) {
-		$record = array( 'row_id' => (int) $row_id, 'fp' => $state['fp'], 'message' => (string) $message );
+	public static function complete( array $state, $row_id, $message, array $data = array() ) {
+		$record = array( 'row_id' => (int) $row_id, 'fp' => $state['fp'], 'message' => (string) $message, 'data' => $data );
 		if ( $state['token_key'] ) {
 			set_transient( $state['token_key'], $record, self::TOKEN_TTL );
 		}
-		set_transient( $state['fp_key'], $record, self::WINDOW );
+		if ( $state['fp_key'] ) {
+			set_transient( $state['fp_key'], $record, self::WINDOW );
+		}
 		self::release( $state );
 	}
 

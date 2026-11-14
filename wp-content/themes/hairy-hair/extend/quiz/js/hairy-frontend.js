@@ -197,23 +197,32 @@ $(document).ready(function () {
         }
 
         $leadMessage.hide();
+
+        // Steps 1 and 2 are saved on the server before moving on (one Lead per email).
+        if (currentStep === 1 || currentStep === 2) {
+          hhSaveLeadStep($leadForm, currentStep, $(this), $leadMessage, goToStep);
+          return;
+        }
       }
 
-      $(".step-" + currentStep).addClass(
-        "animate__animated animate__fadeOutLeft"
-      );
-
-      setTimeout(function () {
-        $(".step").removeClass("animate__animated animate__fadeOutLeft").hide();
-        currentStep++;
-        $(".step-" + currentStep)
-          .show()
-          .addClass("animate__animated animate__fadeInRight");
-
-        displaySteps(currentStep);
-      }, 500);
+      goToStep(currentStep + 1);
     }
   });
+
+  function goToStep(target) {
+    if (target <= currentStep || target > totalSteps) {
+      return;
+    }
+    $(".step-" + currentStep).addClass("animate__animated animate__fadeOutLeft");
+    setTimeout(function () {
+      $(".step").removeClass("animate__animated animate__fadeOutLeft").hide();
+      currentStep = target;
+      $(".step-" + currentStep)
+        .show()
+        .addClass("animate__animated animate__fadeInRight");
+      displaySteps(currentStep);
+    }, 500);
+  }
 
   $(".prev-step-btn").click(function () {
     if (currentStep > 1) {
@@ -558,3 +567,59 @@ jQuery(function ($) {
     });
   });
 });
+
+// Lead form Steps 1 and 2: save on the server, then continue according to the structured response.
+// One request at a time (double clicks are ignored); inputs are never cleared on failure.
+function hhSaveLeadStep($form, step, $button, $message, goToStep) {
+  var $ = jQuery;
+  if ($form.data("hhSaving")) {
+    return;
+  }
+  $form.data("hhSaving", true);
+  $button.prop("disabled", true);
+
+  var data = $.map($form.serializeArray(), function (f) {
+    return f.name === "action" ? null : f;
+  });
+  data.push({ name: "action", value: "hairy_lead_step" }, { name: "lead_step", value: step });
+
+  function show(text, type) {
+    $message.removeClass("success error").addClass(type).text(text).fadeIn();
+  }
+  function restore(answers) {
+    // Only fill questions the customer has not answered on this page.
+    $.each(answers || {}, function (name, value) {
+      var $radio = $form.find('input[type="radio"][name="' + name + '"]');
+      if ($radio.length) {
+        if (!$radio.filter(":checked").length) {
+          $radio.filter(function () { return this.value === value; }).prop("checked", true).trigger("change");
+        }
+        return;
+      }
+      var $text = $form.find('textarea[name="' + name + '"]');
+      if ($text.length && $.trim($text.val()) === "") {
+        $text.val(value);
+      }
+    });
+  }
+
+  $.ajax({ url: hairyQuiz.ajax_url, type: "POST", data: $.param(data) })
+    .done(function (r) {
+      var d = (r && r.data) || {};
+      if (r && r.success) {
+        restore(d.answers);
+        var next = step === 1 && d.next_step === 3 ? 3 : step + 1;
+        goToStep(next);
+        return;
+      }
+      // already_completed, verification_required, needs_review, restart or a validation error.
+      show(d.message || hairyQuiz.quiz_error_message, "error");
+    })
+    .fail(function () {
+      show(hairyQuiz.quiz_error_message, "error");
+    })
+    .always(function () {
+      $form.data("hhSaving", false);
+      $button.prop("disabled", false);
+    });
+}

@@ -24,7 +24,7 @@ if ( ! defined( 'ABSPATH' ) ) {
 class Hairy_Quiz_DB_Migrations {
 
 	/** Schema version this code expects. Absent option = legacy, unversioned table (1). */
-	const DB_VERSION = 4;
+	const DB_VERSION = 5;
 
 	const OPTION      = 'hairy_quiz_lead_db_version';
 	const RETRY_KEY   = 'hairy_quiz_lead_db_migration_retry';
@@ -40,6 +40,7 @@ class Hairy_Quiz_DB_Migrations {
 		2 => 'step_2_add_missing_lead_columns',
 		3 => 'step_3_add_sync_state_columns',
 		4 => 'step_4_add_step2_step3_columns',
+		5 => 'step_5_add_lead_status',
 	);
 
 	/**
@@ -100,6 +101,9 @@ class Hairy_Quiz_DB_Migrations {
 			'explain_allergies'          => array( 'create' => 'TEXT NULL DEFAULT NULL' ),   // NULL = not given / answer No.
 			'explain_medications'        => array( 'create' => 'TEXT NULL DEFAULT NULL' ),
 			'consent_to_contact'         => array( 'create' => 'TINYINT(1) NULL DEFAULT NULL' ), // NULL = recorded before consent was a real choice.
+			// v5: quiz progress (logical name Lead_Status): Pending = Step 1 saved, Completed = Step 3 saved.
+			// Added with no default so existing rows are not marked Pending; step 5 back-fills them, then sets the default.
+			'lead_status'                => array( 'create' => "VARCHAR(20) NULL DEFAULT 'Pending'", 'add' => 'VARCHAR(20) NULL DEFAULT NULL' ),
 		);
 	}
 
@@ -117,6 +121,9 @@ class Hairy_Quiz_DB_Migrations {
 		$lines[] = 'PRIMARY KEY  (ID)';
 		$lines[] = 'KEY user_id (user_id)';
 		$lines[] = 'KEY zoho_sync_status (zoho_sync_status)';
+		$lines[] = 'KEY email (email)';
+		$lines[] = 'KEY lead_status (lead_status)';
+		$lines[] = 'KEY submission_date (submission_date)';
 
 		return 'CREATE TABLE ' . self::table() . " (\n" . implode( ",\n", $lines ) . "\n) " . $wpdb->get_charset_collate() . ';';
 	}
@@ -249,6 +256,54 @@ class Hairy_Quiz_DB_Migrations {
 	 */
 	protected static function step_4_add_step2_step3_columns() {
 		return self::step_2_add_missing_lead_columns();
+	}
+
+	/**
+	 * v5: lead_status column (quiz progress), back-fill of historical rows, default 'Pending' for new
+	 * rows, and indexes for email lookup, status filtering and date ordering.
+	 *
+	 * Back-fill rule (only rows whose lead_status is still NULL; nothing else is changed): before
+	 * this version a lead row was only written when the whole questionnaire was submitted, with the
+	 * five original Step 2/3 answers required. Rows that have all five are therefore 'Completed';
+	 * any row missing one stays NULL (shown as "Unknown" for admin review). No unique email index is
+	 * added: existing duplicates have not been resolved.
+	 *
+	 * @return bool
+	 */
+	protected static function step_5_add_lead_status() {
+		global $wpdb;
+		if ( ! self::step_2_add_missing_lead_columns() ) {
+			return false;
+		}
+		$table = self::table();
+
+		$filled = $wpdb->query( "UPDATE `{$table}` SET lead_status = 'Completed' WHERE lead_status IS NULL AND hair_loss_duration <> '' AND expacted_results <> '' AND allergies_or_sensitivities <> '' AND taking_any_medications <> '' AND high_blood_pressure <> ''" );
+		if ( false === $filled ) {
+			self::log( 'lead_status back-fill failed: ' . $wpdb->last_error );
+			return false;
+		}
+		self::log( sprintf( 'lead_status back-filled as Completed for %d historical row(s).', (int) $filled ) );
+
+		$default = $wpdb->get_row( $wpdb->prepare( 'SHOW COLUMNS FROM `' . $table . '` LIKE %s', 'lead_status' ) );
+		if ( $default && 'Pending' !== $default->Default ) {
+			if ( false === $wpdb->query( "ALTER TABLE `{$table}` ALTER COLUMN `lead_status` SET DEFAULT 'Pending'" ) ) {
+				self::log( 'setting lead_status default failed: ' . $wpdb->last_error );
+				return false;
+			}
+		}
+
+		foreach ( array( 'email', 'lead_status', 'submission_date' ) as $index ) {
+			if ( ! self::index_exists( $index ) && false === $wpdb->query( "ALTER TABLE `{$table}` ADD INDEX `{$index}` (`{$index}`)" ) ) {
+				self::log( sprintf( 'adding index %s failed: %s', $index, $wpdb->last_error ) );
+			}
+		}
+		foreach ( array( 'email', 'lead_status', 'submission_date' ) as $index ) {
+			if ( ! self::index_exists( $index ) ) {
+				self::log( 'migration to version 5 not completed; missing index ' . $index );
+				return false;
+			}
+		}
+		return true;
 	}
 
 	/**

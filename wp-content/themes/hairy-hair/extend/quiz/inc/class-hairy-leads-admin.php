@@ -91,7 +91,7 @@ class Hairy_Leads_Admin {
     /**
      * Columns shown in their own labelled rows; every other column is listed under "Other stored data".
      */
-    const SHOWN_COLUMNS = array( 'ID', 'user_id', 'first_name', 'last_name', 'email', 'phone', 'dob', 'gender', 'address_line_1', 'address_line_2', 'city', 'state', 'postcode', 'receive_communication', 'consent_to_contact', 'hair_loss_duration', 'expacted_results', 'age_group', 'current_hair_loss', 'allergies_or_sensitivities', 'explain_allergies', 'taking_any_medications', 'explain_medications', 'high_blood_pressure', 'submission_date', 'zoho_id', 'zoho_sync_status', 'zoho_sync_attempts', 'zoho_sync_error', 'zoho_sync_at' );
+    const SHOWN_COLUMNS = array( 'ID', 'lead_status', 'user_id', 'first_name', 'last_name', 'email', 'phone', 'dob', 'gender', 'address_line_1', 'address_line_2', 'city', 'state', 'postcode', 'receive_communication', 'consent_to_contact', 'hair_loss_duration', 'expacted_results', 'age_group', 'current_hair_loss', 'allergies_or_sensitivities', 'explain_allergies', 'taking_any_medications', 'explain_medications', 'high_blood_pressure', 'submission_date', 'zoho_id', 'zoho_sync_status', 'zoho_sync_attempts', 'zoho_sync_error', 'zoho_sync_at' );
 
     /**
      * One label/value row (value escaped; empty shown as an em dash).
@@ -222,6 +222,7 @@ class Hairy_Leads_Admin {
         $back = Hairy_Leads_List_Table::read_filters( $_POST ); // read_filters() unslashes and validates
         $back = array_filter( array(
             's'         => $back['s'],
+            'status'    => $back['status'],
             'sync'      => $back['sync'],
             'date_from' => $back['date_from'],
             'date_to'   => $back['date_to'],
@@ -371,6 +372,7 @@ class Hairy_Leads_Admin {
                                             <?php
                                             self::section( 'Record and Zoho CRM' );
                                             self::row( 'Lead ID', $result->ID );
+                                            self::row( 'Quiz status (Lead_Status)', property_exists( $result, 'lead_status' ) ? ( null === $result->lead_status ? 'Unknown (historical, needs review)' : $result->lead_status ) : null );
                                             self::row( 'WordPress account (user_id)', self::user_cell( $result->user_id ), true );
                                             self::row( 'Zoho Lead ID (zoho_id)', isset( $result->zoho_id ) ? $result->zoho_id : null );
                                             self::row( 'Zoho sync status', property_exists( $result, 'zoho_sync_status' ) ? ( null === $result->zoho_sync_status ? 'Not tracked (saved before sync tracking)' : $result->zoho_sync_status ) : null );
@@ -434,6 +436,10 @@ class Hairy_Leads_Admin {
             .hh-badge--retry, .hh-badge--pending, .hh-badge--create_uncertain { background: #fcf9e8; color: #8a6100; }
             .hh-badge--needs_review { background: #f0f6fc; color: #135e96; }
             .hh-badge--failed { background: #fcf0f1; color: #8a2424; }
+            .hh-quiz--completed { background: #edfaef; color: #00691e; font-weight: 600; }
+            .hh-quiz--pending { background: #fff8e5; color: #8a6100; font-weight: 600; }
+            .hh-quiz--unknown { background: #f0f0f1; color: #50575e; }
+            .hairy-leads-table .column-quiz { width: 100px; }
             .hh-empty { padding: 24px 8px; font-size: 14px; }
             .hh-modal[hidden] { display: none; }
             .hh-modal { position: fixed; inset: 0; z-index: 100100; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
@@ -460,11 +466,36 @@ class Hairy_Leads_Admin {
                 <div class="notice notice-<?php echo esc_attr( $notices[ $notice ][0] ); ?> is-dismissible"><p><?php echo esc_html( sprintf( $notices[ $notice ][1], isset( $_GET['hh_lead'] ) ? absint( $_GET['hh_lead'] ) : 0 ) ); ?></p></div>
             <?php endif; ?>
 
+            <?php
+            // Zoho Lead_Status readiness (cached result of the last check; no API call on page load).
+            $ls_field = get_option( 'hh_zoho_lead_status_field' );
+            if ( is_array( $ls_field ) && isset( $ls_field['state'] ) && 'ok' !== $ls_field['state'] ) :
+                $ls_text = array(
+                    'missing'        => __( 'Zoho Leads has no field with the API name Lead_Status.', 'hairy-hair' ),
+                    'not_picklist'   => __( 'Zoho field Lead_Status is not a picklist.', 'hairy-hair' ),
+                    'values_missing' => sprintf( __( 'Zoho picklist Lead_Status is missing: %s.', 'hairy-hair' ), implode( ', ', (array) ( $ls_field['values'] ?? array() ) ) ),
+                    'denied'         => __( 'The Zoho connection may not read field settings (OAuth scope ZohoCRM.settings.fields.READ). Add the scope, or confirm the field manually and define HH_ZOHO_LEAD_STATUS_VERIFIED.', 'hairy-hair' ),
+                );
+                ?>
+                <div class="notice notice-warning"><p><strong><?php esc_html_e( 'Quiz status is not being written to Zoho.', 'hairy-hair' ); ?></strong>
+                    <?php echo esc_html( $ls_text[ $ls_field['state'] ] ?? $ls_field['state'] ); ?>
+                    <?php esc_html_e( 'Answers still sync; affected leads show a LEAD_STATUS_… code in Zoho sync. Re-checked hourly.', 'hairy-hair' ); ?></p></div>
+            <?php endif; ?>
+
             <form method="get" class="hh-filters" role="search" aria-label="<?php esc_attr_e( 'Filter leads', 'hairy-hair' ); ?>">
                 <input type="hidden" name="page" value="hairy-leads-results">
                 <div class="hh-field">
                     <label for="hh-s"><?php esc_html_e( 'Search', 'hairy-hair' ); ?></label>
                     <input type="search" id="hh-s" name="s" value="<?php echo esc_attr( $filters['s'] ); ?>" placeholder="<?php esc_attr_e( 'Lead ID, name or email', 'hairy-hair' ); ?>" maxlength="100">
+                </div>
+                <div class="hh-field">
+                    <label for="hh-status"><?php esc_html_e( 'Quiz', 'hairy-hair' ); ?></label>
+                    <select id="hh-status" name="status">
+                        <option value=""><?php esc_html_e( 'All', 'hairy-hair' ); ?></option>
+                        <?php foreach ( Hairy_Leads_List_Table::STATUS_FILTERS as $value => $label ) : ?>
+                            <option value="<?php echo esc_attr( $value ); ?>" <?php selected( $filters['status'], $value ); ?>><?php echo esc_html( $label ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
                 </div>
                 <div class="hh-field">
                     <label for="hh-sync"><?php esc_html_e( 'Zoho sync', 'hairy-hair' ); ?></label>
@@ -501,7 +532,7 @@ class Hairy_Leads_Admin {
 
             <form method="get" class="hh-table-form">
                 <input type="hidden" name="page" value="hairy-leads-results">
-                <?php foreach ( array( 's', 'sync', 'date_from', 'date_to' ) as $k ) : if ( '' !== $filters[ $k ] ) : ?>
+                <?php foreach ( array( 's', 'status', 'sync', 'date_from', 'date_to' ) as $k ) : if ( '' !== $filters[ $k ] ) : ?>
                     <input type="hidden" name="<?php echo esc_attr( $k ); ?>" value="<?php echo esc_attr( $filters[ $k ] ); ?>">
                 <?php endif; endforeach; ?>
                 <input type="hidden" name="per_page" value="<?php echo esc_attr( $filters['per_page'] ); ?>">
@@ -517,7 +548,7 @@ class Hairy_Leads_Admin {
                         <input type="hidden" name="action" value="hh_remove_lead">
                         <input type="hidden" name="lead_id" value="">
                         <input type="hidden" name="_wpnonce" value="">
-                        <?php foreach ( array( 's', 'sync', 'date_from', 'date_to' ) as $k ) : ?>
+                        <?php foreach ( array( 's', 'status', 'sync', 'date_from', 'date_to' ) as $k ) : ?>
                             <input type="hidden" name="<?php echo esc_attr( $k ); ?>" value="<?php echo esc_attr( $filters[ $k ] ); ?>">
                         <?php endforeach; ?>
                         <input type="hidden" name="per_page" value="<?php echo esc_attr( $filters['per_page'] ); ?>">
